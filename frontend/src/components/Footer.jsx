@@ -69,8 +69,8 @@ const Footer = () => {
               <a href="#" className="text-gray-300 hover:text-white text-sm transition-colors">채용정보</a>
             </div>
             <div className="text-gray-400 text-sm text-center md:text-right">
-              <p>&copy; 2024 CAU Code. All rights reserved.</p>
-              <p className="mt-1">중앙대학교 컴퓨터공학부</p>
+              <p>&copy; 2025 CAU Code. All rights reserved.</p>
+              <p className="mt-1">중앙대학교 소프트웨어학부</p>
             </div>
           </div>
         </div>
