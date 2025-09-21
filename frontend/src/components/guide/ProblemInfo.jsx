@@ -6,37 +6,49 @@ const ProblemInfo = ({ problemNumber }) => {
     const problems = {
       '1000': {
         title: 'A+B',
-        description: '두 정수 A와 B를 입력받은 다음, A+B를 출력하는 프로그램을 작성하시오.',
         timeLimit: '2초',
         memoryLimit: '128MB',
         tier: '브론즈 V',
-        tags: ['수학', '구현', '사칙연산']
+        tags: ['수학', '구현', '사칙연산'],
+        submissions: 2847692,
+        correct: 1892456,
+        users: 1638923,
+        correctRate: 66.4
       },
       '1920': {
         title: '수 찾기',
-        description: 'N개의 정수 A[1], A[2], …, A[N]이 주어져 있을 때, 이 안에 X라는 정수가 존재하는지 알아내는 프로그램을 작성하시오.',
         timeLimit: '1초',
         memoryLimit: '128MB',
         tier: '실버 IV',
-        tags: ['자료 구조', '정렬', '이진 탐색']
+        tags: ['자료 구조', '정렬', '이진 탐색'],
+        submissions: 425687,
+        correct: 178923,
+        users: 145782,
+        correctRate: 42.0
       },
       '11399': {
         title: 'ATM',
-        description: '인하은행에는 ATM이 1대밖에 없다. 지금 이 ATM앞에 N명의 사람들이 줄을 서있다.',
         timeLimit: '1초',
         memoryLimit: '256MB',
         tier: '실버 IV',
-        tags: ['그리디 알고리즘', '정렬']
+        tags: ['그리디 알고리즘', '정렬'],
+        submissions: 267891,
+        correct: 189234,
+        users: 156789,
+        correctRate: 70.6
       }
     };
-    
+
     return problems[number] || {
       title: `문제 ${number}번`,
-      description: '문제 정보를 불러오는 중입니다...',
       timeLimit: '-',
       memoryLimit: '-',
       tier: '알 수 없음',
-      tags: []
+      tags: [],
+      submissions: 0,
+      correct: 0,
+      users: 0,
+      correctRate: 0
     };
   };
 
@@ -69,7 +81,6 @@ const ProblemInfo = ({ problemNumber }) => {
         </span>
       </div>
       
-      <p className="text-gray-600 mb-4">{problemInfo.description}</p>
       
       <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
         <div>
@@ -79,6 +90,25 @@ const ProblemInfo = ({ problemNumber }) => {
         <div>
           <span className="font-medium text-gray-700">메모리 제한:</span>
           <span className="ml-2 text-gray-600">{problemInfo.memoryLimit}</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4 text-sm">
+        <div>
+          <span className="font-medium text-gray-700">제출:</span>
+          <span className="ml-2 text-gray-600">{problemInfo.submissions.toLocaleString()}</span>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">맞은 횟수:</span>
+          <span className="ml-2 text-gray-600">{problemInfo.correct.toLocaleString()}</span>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">푼 사람 수:</span>
+          <span className="ml-2 text-gray-600">{problemInfo.users.toLocaleString()}</span>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">정답 비율:</span>
+          <span className="ml-2 text-gray-600">{problemInfo.correctRate}%</span>
         </div>
       </div>
       

@@ -11,7 +11,7 @@ import Ranking from './pages/Ranking';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-[#F2F8FA] flex flex-col">
         <Navigation />
         <main className="flex-grow">
           <Routes>

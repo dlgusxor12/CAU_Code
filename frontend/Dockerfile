@@ -14,6 +14,9 @@ COPY package*.json ./
 # 의존성 설치 (개발 환경이므로 모든 의존성 설치)
 RUN npm install && npm cache clean --force
 
+# curl 설치 (헬스체크용)
+RUN apk add --no-cache curl
+
 # 소스 코드 복사
 COPY . .
 

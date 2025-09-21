@@ -4,6 +4,9 @@ const Ranking = () => {
   const [activeTab, setActiveTab] = useState('overall');
   const [timeFilter, setTimeFilter] = useState('weekly');
 
+  // 사용자 소속단체 정보 (나중에 API에서 가져올 예정)
+  const userOrganization = '중앙대학교';
+
   const mockRankingData = {
     overall: [
       { rank: 1, username: 'algorithm_master', solvedCount: 1247, tier: '다이아몬드 II', score: 2845, avatar: '🏆' },
@@ -56,9 +59,23 @@ const Ranking = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* 헤더 */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">랭킹</h1>
-        <p className="text-gray-600">CAU Code 사용자들의 랭킹을 확인하고 자신의 실력을 점검해보세요</p>
+      <div className="mb-8 relative">
+        <div className="flex items-center space-x-3">
+          <img
+            src="/images/푸앙_응원.png"
+            alt="푸앙"
+            className="w-12 h-12 object-contain"
+          />
+          <div>
+            <h1 className="text-3xl font-bold text-[#143365] mb-2">랭킹</h1>
+            <p className="text-[#2B95C3]">CAU Code 사용자들의 랭킹을 확인하고 자신의 실력을 점검해보세요</p>
+          </div>
+        </div>
+        <img
+          src="/images/푸앙_윙크.png"
+          alt="푸앙"
+          className="w-16 h-16 object-contain absolute top-0 right-0 opacity-30"
+        />
       </div>
 
       {/* 탭 및 필터 */}
@@ -69,9 +86,9 @@ const Ranking = () => {
             <button
               onClick={() => setActiveTab('overall')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'overall' 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
+                activeTab === 'overall'
+                  ? 'bg-white text-[#143365] shadow-sm'
+                  : 'text-gray-600 hover:text-[#2B95C3]'
               }`}
             >
               전체 랭킹
@@ -79,9 +96,9 @@ const Ranking = () => {
             <button
               onClick={() => setActiveTab('school')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'school' 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
+                activeTab === 'school'
+                  ? 'bg-white text-[#143365] shadow-sm'
+                  : 'text-gray-600 hover:text-[#2B95C3]'
               }`}
             >
               학교 랭킹
@@ -95,8 +112,8 @@ const Ranking = () => {
                 key={filter}
                 onClick={() => setTimeFilter(filter)}
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                  timeFilter === filter 
-                    ? 'bg-blue-600 text-white' 
+                  timeFilter === filter
+                    ? 'bg-[#2B95C3] text-white'
                     : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                 }`}
               >
@@ -108,8 +125,13 @@ const Ranking = () => {
       </div>
 
       {/* 내 랭킹 */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 mb-8 text-white">
-        <h3 className="text-lg font-semibold mb-4">내 현재 랭킹</h3>
+      <div className="bg-gradient-to-r from-[#2B95C3] to-[#DEACC5] rounded-xl p-6 mb-8 text-white relative overflow-hidden">
+        <img
+          src="/images/푸앙_의복학위복.png"
+          alt="푸앙"
+          className="w-20 h-20 object-contain absolute top-4 right-4 opacity-30"
+        />
+        <h3 className="text-lg font-semibold mb-4">내 현재 랭킹 ({userOrganization})</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
             <div className="text-2xl font-bold">#42</div>
@@ -195,22 +217,37 @@ const Ranking = () => {
 
       {/* 통계 카드 */}
       <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h4 className="text-lg font-semibold text-gray-900 mb-2">총 사용자 수</h4>
-          <div className="text-3xl font-bold text-blue-600">2,847</div>
-          <p className="text-sm text-gray-600 mt-1">전체 등록된 사용자</p>
+        <div className="bg-white rounded-xl shadow-sm border p-6 relative">
+          <img
+            src="/images/푸앙_기본형.png"
+            alt="푸앙"
+            className="w-10 h-10 object-contain absolute top-4 right-4 opacity-40"
+          />
+          <h4 className="text-lg font-semibold text-[#143365] mb-2">총 사용자 수</h4>
+          <div className="text-3xl font-bold text-[#2B95C3]">2,847</div>
+          <p className="text-sm text-[#143365] mt-1">전체 등록된 사용자</p>
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h4 className="text-lg font-semibold text-gray-900 mb-2">이번 주 활성 사용자</h4>
-          <div className="text-3xl font-bold text-green-600">1,234</div>
-          <p className="text-sm text-gray-600 mt-1">문제를 해결한 사용자</p>
+        <div className="bg-white rounded-xl shadow-sm border p-6 relative">
+          <img
+            src="/images/푸앙_의복학위복.png"
+            alt="푸앙"
+            className="w-10 h-10 object-contain absolute top-4 right-4 opacity-40"
+          />
+          <h4 className="text-lg font-semibold text-[#143365] mb-2">내 소속 사용자</h4>
+          <div className="text-3xl font-bold text-[#DEACC5]">1,234</div>
+          <p className="text-sm text-[#143365] mt-1">{userOrganization} 사용자</p>
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h4 className="text-lg font-semibold text-gray-900 mb-2">평균 해결 문제 수</h4>
-          <div className="text-3xl font-bold text-purple-600">87</div>
-          <p className="text-sm text-gray-600 mt-1">사용자당 평균</p>
+        <div className="bg-white rounded-xl shadow-sm border p-6 relative">
+          <img
+            src="/images/푸앙_미소.png"
+            alt="푸앙"
+            className="w-10 h-10 object-contain absolute top-4 right-4 opacity-40"
+          />
+          <h4 className="text-lg font-semibold text-[#143365] mb-2">평균 해결 문제 수</h4>
+          <div className="text-3xl font-bold text-[#D7BCA1]">87</div>
+          <p className="text-sm text-[#143365] mt-1">사용자당 평균</p>
         </div>
       </div>
     </div>

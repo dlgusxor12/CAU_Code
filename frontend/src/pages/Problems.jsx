@@ -129,9 +129,23 @@ const Problems = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">문제 추천</h1>
-        <p className="text-gray-600">AI가 당신의 실력에 맞는 문제를 추천해드립니다</p>
+      <div className="mb-8 relative">
+        <div className="flex items-center space-x-3">
+          <img
+            src="/images/푸앙_열공.png"
+            alt="푸앙"
+            className="w-12 h-12 object-contain"
+          />
+          <div>
+            <h1 className="text-3xl font-bold text-[#143365] mb-2">문제 추천</h1>
+            <p className="text-[#2B95C3]">AI가 당신의 실력에 맞는 문제를 추천해드립니다</p>
+          </div>
+        </div>
+        <img
+          src="/images/푸앙_응원.png"
+          alt="푸앙"
+          className="w-16 h-16 object-contain absolute top-0 right-0 opacity-30"
+        />
       </div>
 
       {/* 통계 */}
