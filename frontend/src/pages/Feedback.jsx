@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { analysisService } from '../services';
 
 const Feedback = () => {
   const location = useLocation();
@@ -8,86 +9,86 @@ const Feedback = () => {
   const [loading, setLoading] = useState(true);
   const [problemNumber, setProblemNumber] = useState('');
   const [showAICode, setShowAICode] = useState(false);
+  const [aiCode, setAiCode] = useState(null);
+  const [loadingAICode, setLoadingAICode] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (location.state?.problemNumber) {
+    if (location.state?.submissionId && location.state?.problemNumber) {
       setProblemNumber(location.state.problemNumber);
-      setTimeout(() => {
-        setFeedback(generateMockFeedback(location.state.problemNumber));
-        setLoading(false);
-      }, 1500);
+      fetchAnalysisResult(location.state.submissionId);
     } else {
       setLoading(false);
     }
   }, [location.state]);
 
-  const generateMockFeedback = (problemNum) => {
-    const feedbacks = {
-      '1000': {
-        title: 'A+B 문제 피드백',
-        score: 85,
-        strengths: [
-          '입출력 처리가 정확합니다',
-          '코드 구조가 깔끔합니다',
-          '변수명이 명확합니다'
-        ],
-        improvements: [
-          '예외 처리를 추가하면 더 좋겠습니다',
-          '주석을 추가하여 가독성을 높일 수 있습니다'
-        ],
-        suggestions: [
-          '더 복잡한 수학 문제에 도전해보세요',
-          '입출력 최적화 방법을 학습해보세요'
-        ],
-        timeComplexity: {
-          analysis: 'O(1)',
-          description: '입력받고 덧셈 연산을 수행하는 상수 시간 알고리즘입니다.',
-          efficiency: '우수',
-          color: 'green'
-        },
-        code: `#include <iostream>
-using namespace std;
+  const fetchAnalysisResult = async (submissionId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await analysisService.analyzeSubmittedCode(submissionId);
 
-int main() {
-    int A, B;
-    cin >> A >> B;
-    cout << A + B << endl;
-    return 0;
-}`,
-        aiCode: `#include <iostream>
-using namespace std;
-
-int main() {
-    // AI가 제안하는 최적화된 코드
-    int A, B;
-    cin >> A >> B;
-    cout << A + B << '\n';  // endl 대신 '\n' 사용으로 성능 향상
-    return 0;
-}`
+      if (response.status === 'success' && response.data) {
+        const data = response.data;
+        setFeedback({
+          title: `문제 ${problemNumber}번 피드백`,
+          score: data.score,
+          strengths: data.strengths ? data.strengths.split('\n').filter(s => s.trim()) : ['코드가 정상적으로 작동합니다'],
+          improvements: data.improvements ? data.improvements.split('\n').filter(s => s.trim()) : ['더 효율적인 방법을 고려해보세요'],
+          suggestions: data.core_concept ? [data.core_concept] : ['다양한 방법으로 문제를 접근해보세요'],
+          timeComplexity: {
+            analysis: data.time_complexity || 'O(n)',
+            description: `${data.algorithm_type || '구현'} 알고리즘을 사용한 솔루션입니다.`,
+            efficiency: data.score >= 80 ? '우수' : data.score >= 60 ? '보통' : '개선 필요',
+            color: data.score >= 80 ? 'green' : data.score >= 60 ? 'yellow' : 'red'
+          },
+          code: data.submitted_code || '// 코드를 불러올 수 없습니다',
+          aiCode: null
+        });
       }
-    };
+    } catch (error) {
+      console.error('Failed to fetch analysis result:', error);
+      setError('분석 결과를 불러올 수 없습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return feedbacks[problemNum] || {
-      title: `문제 ${problemNum}번 피드백`,
-      score: 78,
-      strengths: ['코드가 동작합니다'],
-      improvements: ['더 나은 알고리즘을 고려해보세요'],
-      suggestions: ['다양한 방법으로 문제를 접근해보세요'],
-      timeComplexity: {
-        analysis: 'O(n)',
-        description: '일반적인 선형 시간 알고리즘입니다.',
-        efficiency: '보통',
-        color: 'yellow'
-      },
-      code: '// 코드 분석 중...',
-      aiCode: `// AI가 제안하는 최적화된 해법
-def solve():
-    # 효율적인 알고리즘 구현
-    result = optimized_algorithm()
-    return result
+  const fetchAICode = async () => {
+    if (!feedback) return;
 
-print(solve())`
-    };
+    try {
+      setLoadingAICode(true);
+      const response = await analysisService.getOptimizedCode({
+        problem_id: parseInt(problemNumber),
+        language: 'python', // 기본 언어
+        current_code: feedback.code
+      });
+
+      if (response.status === 'success' && response.data) {
+        setAiCode({
+          code: response.data.optimized_code,
+          explanation: response.data.explanation,
+          insights: response.data.key_insights || []
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch AI optimized code:', error);
+      setAiCode({
+        code: '// AI 최적화 코드를 불러올 수 없습니다',
+        explanation: '현재 AI 최적화 서비스를 이용할 수 없습니다.',
+        insights: []
+      });
+    } finally {
+      setLoadingAICode(false);
+    }
+  };
+
+  const handleShowAICode = () => {
+    setShowAICode(true);
+    if (!aiCode) {
+      fetchAICode();
+    }
   };
 
   const handleRetry = () => {
@@ -111,13 +112,38 @@ print(solve())`
     );
   }
 
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">오류가 발생했습니다</h1>
+          <p className="text-red-600 mb-8">{error}</p>
+          <div className="space-x-4">
+            <button
+              onClick={() => navigate('/guide')}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              문제 가이드로 이동
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              메인으로 돌아가기
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!feedback) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">코드 피드백</h1>
           <p className="text-gray-600 mb-8">문제 가이드에서 코드를 제출하면 AI 피드백을 받을 수 있습니다</p>
-          <button 
+          <button
             onClick={() => navigate('/guide')}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
@@ -187,18 +213,41 @@ print(solve())`
                   ✕
                 </button>
               </div>
-              <div className="bg-gray-800 rounded-lg p-4 overflow-x-auto">
-                <pre className="text-gray-100 text-sm">
-                  <code>{feedback.aiCode}</code>
-                </pre>
-              </div>
-              <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-2">💡 AI 코드 설명</h4>
-                <p className="text-sm text-blue-700">
-                  이 코드는 더 효율적인 알고리즘과 최적화 기법을 적용한 버전입니다.
-                  성능과 가독성을 모두 고려하여 작성되었습니다.
-                </p>
-              </div>
+
+              {loadingAICode ? (
+                <div className="text-center py-8">
+                  <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-600">AI가 최적화된 코드를 생성하고 있습니다...</p>
+                </div>
+              ) : aiCode ? (
+                <>
+                  <div className="bg-gray-800 rounded-lg p-4 overflow-x-auto">
+                    <pre className="text-gray-100 text-sm">
+                      <code>{aiCode.code}</code>
+                    </pre>
+                  </div>
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">💡 AI 코드 설명</h4>
+                    <p className="text-sm text-blue-700">
+                      {aiCode.explanation || '이 코드는 더 효율적인 알고리즘과 최적화 기법을 적용한 버전입니다.'}
+                    </p>
+                    {aiCode.insights && aiCode.insights.length > 0 && (
+                      <div className="mt-3">
+                        <h5 className="font-medium text-blue-900 mb-1">핵심 개선 사항:</h5>
+                        <ul className="text-sm text-blue-700 list-disc list-inside">
+                          {aiCode.insights.map((insight, index) => (
+                            <li key={index}>{insight}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-600">AI 코드를 불러올 수 없습니다.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -266,7 +315,7 @@ print(solve())`
           메인으로 돌아가기
         </button>
         <button
-          onClick={() => setShowAICode(true)}
+          onClick={handleShowAICode}
           className="px-8 py-3 bg-[#DEACC5] text-white rounded-lg hover:bg-[#D7BCA1] transition-colors font-medium"
         >
           AI 코드 보기

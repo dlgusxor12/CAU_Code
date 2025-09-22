@@ -1,55 +1,71 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { guideService } from '../../services';
 
 const ProblemInfo = ({ problemNumber }) => {
-  // 실제로는 API에서 문제 정보를 받아올 것
-  const getProblemInfo = (number) => {
-    const problems = {
-      '1000': {
-        title: 'A+B',
-        timeLimit: '2초',
-        memoryLimit: '128MB',
-        tier: '브론즈 V',
-        tags: ['수학', '구현', '사칙연산'],
-        submissions: 2847692,
-        correct: 1892456,
-        users: 1638923,
-        correctRate: 66.4
-      },
-      '1920': {
-        title: '수 찾기',
-        timeLimit: '1초',
-        memoryLimit: '128MB',
-        tier: '실버 IV',
-        tags: ['자료 구조', '정렬', '이진 탐색'],
-        submissions: 425687,
-        correct: 178923,
-        users: 145782,
-        correctRate: 42.0
-      },
-      '11399': {
-        title: 'ATM',
-        timeLimit: '1초',
-        memoryLimit: '256MB',
-        tier: '실버 IV',
-        tags: ['그리디 알고리즘', '정렬'],
-        submissions: 267891,
-        correct: 189234,
-        users: 156789,
-        correctRate: 70.6
-      }
-    };
+  const [problemInfo, setProblemInfo] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    return problems[number] || {
-      title: `문제 ${number}번`,
-      timeLimit: '-',
-      memoryLimit: '-',
-      tier: '알 수 없음',
-      tags: [],
-      submissions: 0,
-      correct: 0,
-      users: 0,
-      correctRate: 0
+  useEffect(() => {
+    if (problemNumber) {
+      fetchProblemInfo(problemNumber);
+    } else {
+      setProblemInfo(null);
+      setError(null);
+    }
+  }, [problemNumber]);
+
+  const fetchProblemInfo = async (number) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await guideService.getProblemDetail(parseInt(number));
+
+      if (response.status === 'success' && response.data) {
+        const data = response.data;
+        setProblemInfo({
+          title: data.title,
+          timeLimit: `${Math.round(data.time_limit / 1000)}초`,
+          memoryLimit: `${Math.round(data.memory_limit / 1024)}MB`,
+          tier: getTierName(data.tier),
+          tags: data.algorithms || [],
+          submissions: data.submission_count,
+          correct: data.accepted_count,
+          users: data.solved_count,
+          correctRate: data.success_rate ? Math.round(data.success_rate * 100) / 100 : 0
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch problem info:', error);
+      setError('문제 정보를 불러올 수 없습니다.');
+      setProblemInfo({
+        title: `문제 ${number}번`,
+        timeLimit: '-',
+        memoryLimit: '-',
+        tier: '알 수 없음',
+        tags: [],
+        submissions: 0,
+        correct: 0,
+        users: 0,
+        correctRate: 0
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getTierName = (tierId) => {
+    const tierNames = {
+      0: '언레이티드',
+      1: '브론즈 V', 2: '브론즈 IV', 3: '브론즈 III', 4: '브론즈 II', 5: '브론즈 I',
+      6: '실버 V', 7: '실버 IV', 8: '실버 III', 9: '실버 II', 10: '실버 I',
+      11: '골드 V', 12: '골드 IV', 13: '골드 III', 14: '골드 II', 15: '골드 I',
+      16: '플래티넘 V', 17: '플래티넘 IV', 18: '플래티넘 III', 19: '플래티넘 II', 20: '플래티넘 I',
+      21: '다이아몬드 V', 22: '다이아몬드 IV', 23: '다이아몬드 III', 24: '다이아몬드 II', 25: '다이아몬드 I',
+      26: '루비 V', 27: '루비 IV', 28: '루비 III', 29: '루비 II', 30: '루비 I',
+      31: '마스터'
     };
+    return tierNames[tierId] || '알 수 없음';
   };
 
   if (!problemNumber) {
@@ -60,7 +76,37 @@ const ProblemInfo = ({ problemNumber }) => {
     );
   }
 
-  const problemInfo = getProblemInfo(problemNumber);
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="h-4 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded"></div>
+          </div>
+          <div className="grid grid-cols-4 gap-4 mb-4">
+            <div className="h-4 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 rounded-lg p-4 text-center text-red-600 mb-6">
+        {error}
+      </div>
+    );
+  }
+
+  if (!problemInfo) {
+    return null;
+  }
   const getTierColor = (tier) => {
     if (tier.includes('브론즈')) return 'bg-amber-100 text-amber-800';
     if (tier.includes('실버')) return 'bg-gray-100 text-gray-800';
@@ -99,11 +145,11 @@ const ProblemInfo = ({ problemNumber }) => {
           <span className="ml-2 text-gray-600">{problemInfo.submissions.toLocaleString()}</span>
         </div>
         <div>
-          <span className="font-medium text-gray-700">맞은 횟수:</span>
+          <span className="font-medium text-gray-700">정답:</span>
           <span className="ml-2 text-gray-600">{problemInfo.correct.toLocaleString()}</span>
         </div>
         <div>
-          <span className="font-medium text-gray-700">푼 사람 수:</span>
+          <span className="font-medium text-gray-700">맞힌 사람:</span>
           <span className="ml-2 text-gray-600">{problemInfo.users.toLocaleString()}</span>
         </div>
         <div>

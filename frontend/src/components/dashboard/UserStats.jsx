@@ -1,23 +1,61 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { userService } from '../../services';
 
 const UserStats = () => {
-  const stats = [
+  const [stats, setStats] = useState([
     {
       label: '현재 레이팅',
-      value: '1,847',
+      value: '...',
       textColor: 'text-gray-900'
     },
     {
       label: '현재 티어',
-      value: '골드 III',
+      value: '...',
       textColor: 'tier-gold'
     },
     {
       label: '해결 문제',
-      value: '247',
+      value: '...',
       textColor: 'text-gray-900'
     }
-  ];
+  ]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchUserStats();
+  }, []);
+
+  const fetchUserStats = async () => {
+    try {
+      setLoading(true);
+      const response = await userService.getUserStats();
+
+      if (response.status === 'success' && response.data) {
+        const data = response.data;
+        setStats([
+          {
+            label: '현재 레이팅',
+            value: data.current_rating?.toLocaleString() || '0',
+            textColor: 'text-gray-900'
+          },
+          {
+            label: '현재 티어',
+            value: data.tier_name || 'Unrated',
+            textColor: 'tier-gold'
+          },
+          {
+            label: '해결 문제',
+            value: data.solved_problems?.toString() || '0',
+            textColor: 'text-gray-900'
+          }
+        ]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatImage = (index) => {
     const images = ['/images/푸앙_열공.png', '/images/푸앙_윙크.png', '/images/푸앙_미소.png'];
@@ -34,7 +72,13 @@ const UserStats = () => {
             className="w-8 h-8 object-contain absolute top-4 right-4 opacity-60"
           />
           <p className="text-[#143365] text-sm font-medium mb-2">{stat.label}</p>
-          <p className={`text-3xl font-bold ${stat.textColor === 'text-gray-900' ? 'text-[#143365]' : stat.textColor}`}>{stat.value}</p>
+          <p className={`text-3xl font-bold ${stat.textColor === 'text-gray-900' ? 'text-[#143365]' : stat.textColor}`}>
+            {loading ? (
+              <div className="animate-pulse bg-gray-200 h-8 w-16 mx-auto rounded"></div>
+            ) : (
+              stat.value
+            )}
+          </p>
         </div>
       ))}
     </div>
