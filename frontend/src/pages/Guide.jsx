@@ -171,6 +171,8 @@ const Guide = () => {
         onClose={handleCloseModal}
         submissionType={submissionType}
         problemNumber={problemNumber}
+        language={language}
+        code={code}
       />
 
       {/* 알림 모달 */}

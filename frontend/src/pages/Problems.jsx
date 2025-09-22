@@ -3,128 +3,111 @@ import ProblemCard from '../components/ProblemCard';
 import RecommendationFilters from '../components/problems/RecommendationFilters';
 import RecommendationSettings from '../components/problems/RecommendationSettings';
 import ProblemStats from '../components/problems/ProblemStats';
+import { problemService } from '../services';
 
 const Problems = () => {
   const [problems, setProblems] = useState([]);
   const [filteredProblems, setFilteredProblems] = useState([]);
-  const [filters, setFilters] = useState({ tier: '', algorithm: '', difficulty: '' });
-  const [settings, setSettings] = useState({});
+  const [filters, setFilters] = useState({ tier_min: null, tier_max: null, algorithm: '', difficulty_class: null });
+  const [settings, setSettings] = useState({
+    recommendationType: 'adaptive',
+    problemCount: 5,
+    includeWrongProblems: true,
+    focusWeakAreas: true
+  });
   const [loading, setLoading] = useState(false);
 
-  // 초기 문제 데이터
-  const initialProblems = [
-    {
-      id: 2839,
-      title: '설탕 배달',
-      description: '설탕을 정확히 N킬로그램 배달해야 합니다. 3킬로그램 봉지와 5킬로그램 봉지를 사용하여 최소 봉지 개수를 구하세요.',
-      tier: '실버 IV',
-      algorithm: '그리디',
-      difficulty: '2',
-      solved: false
-    },
-    {
-      id: 1541,
-      title: '잃어버린 괄호',
-      description: '괄호를 적절히 배치하여 식의 값을 최소화하는 문제입니다.',
-      tier: '실버 II',
-      algorithm: '그리디',
-      difficulty: '3',
-      solved: false
-    },
-    {
-      id: 11047,
-      title: '동전 0',
-      description: 'K원을 만드는데 필요한 동전 개수의 최솟값을 구하는 문제입니다.',
-      tier: '실버 III',
-      algorithm: '그리디',
-      difficulty: '3',
-      solved: true
-    },
-    {
-      id: 1931,
-      title: '회의실 배정',
-      description: '회의실을 사용할 수 있는 회의의 최대 개수를 구하는 문제입니다.',
-      tier: '실버 I',
-      algorithm: '그리디',
-      difficulty: '4',
-      solved: true
-    },
-    {
-      id: 2750,
-      title: '수 정렬하기',
-      description: 'N개의 수가 주어졌을 때, 이를 오름차순으로 정렬하는 프로그램을 작성하세요.',
-      tier: '브론즈 II',
-      algorithm: '정렬',
-      difficulty: '1',
-      solved: false
-    },
-    {
-      id: 1074,
-      title: 'Z',
-      description: '재귀적으로 배열을 탐색하며 특정 위치를 찾는 문제입니다.',
-      tier: '골드 V',
-      algorithm: '구현',
-      difficulty: '4',
-      solved: false
-    }
-  ];
-
   useEffect(() => {
-    // 초기 문제 로드
-    setProblems(initialProblems);
-    setFilteredProblems(initialProblems);
+    // 초기 문제 추천 로드
+    loadInitialRecommendations();
   }, []);
 
   useEffect(() => {
     // 필터링 적용
-    let filtered = problems;
+    if (Object.values(filters).some(filter => filter !== null && filter !== '')) {
+      searchProblemsWithFilters();
+    } else {
+      setFilteredProblems(problems);
+    }
+  }, [filters]);
 
-    if (filters.tier) {
-      filtered = filtered.filter(problem => problem.tier.includes(filters.tier));
-    }
-    if (filters.algorithm) {
-      filtered = filtered.filter(problem => problem.algorithm === filters.algorithm);
-    }
-    if (filters.difficulty) {
-      filtered = filtered.filter(problem => problem.difficulty === filters.difficulty);
-    }
+  const loadInitialRecommendations = async () => {
+    try {
+      setLoading(true);
+      const response = await problemService.getRecommendations({
+        username: 'dlgusxor12',
+        mode: settings.recommendationType,
+        count: settings.problemCount
+      });
 
-    setFilteredProblems(filtered);
-  }, [problems, filters]);
+      if (response.status === 'success' && response.data) {
+        const transformedProblems = transformBackendProblems(response.data.problems);
+        setProblems(transformedProblems);
+        setFilteredProblems(transformedProblems);
+      }
+    } catch (error) {
+      console.error('Failed to load initial recommendations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const searchProblemsWithFilters = async () => {
+    try {
+      setLoading(true);
+      const response = await problemService.searchProblems(filters);
+
+      if (response.status === 'success' && response.data) {
+        const transformedProblems = transformBackendProblems(response.data.problems);
+        setFilteredProblems(transformedProblems);
+      }
+    } catch (error) {
+      console.error('Failed to search problems with filters:', error);
+      setFilteredProblems(problems);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const transformBackendProblems = (backendProblems) => {
+    return backendProblems.map(problem => ({
+      id: problem.problem_id || problem.id,
+      title: problem.title || 'Unknown',
+      description: problem.description || 'No description available',
+      tier: problem.tier_name || 'Unknown',
+      algorithm: problem.algorithm_tags?.[0] || 'Unknown',
+      difficulty: problem.difficulty_class?.toString() || '1',
+      solved: problem.is_solved || false
+    }));
+  };
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
   };
 
-  const handleSettingsChange = (newSettings, shouldRecommend = false) => {
+  const handleSettingsChange = async (newSettings, shouldRecommend = false) => {
     setSettings(newSettings);
-    
-    if (shouldRecommend) {
-      setLoading(true);
-      // 새로운 추천 로직 시뮬레이션
-      setTimeout(() => {
-        const recommendedProblems = generateRecommendedProblems(newSettings);
-        setProblems(recommendedProblems);
-        setLoading(false);
-      }, 1500);
-    }
-  };
 
-  const generateRecommendedProblems = (settings) => {
-    // 실제로는 서버에서 AI 추천을 받아올 것
-    let recommended = [...initialProblems];
-    
-    if (settings.recommendationType === 'challenge') {
-      // 도전 모드: 더 어려운 문제들
-      recommended = recommended.filter(p => 
-        p.tier.includes('골드') || p.tier.includes('플래티넘')
-      );
-    } else if (settings.recommendationType === 'similar') {
-      // 유사 문제: 그리디 위주
-      recommended = recommended.filter(p => p.algorithm === '그리디');
+    if (shouldRecommend) {
+      try {
+        setLoading(true);
+        const response = await problemService.getRecommendations({
+          username: 'dlgusxor12',
+          mode: newSettings.recommendationType,
+          count: newSettings.problemCount
+        });
+
+        if (response.status === 'success' && response.data) {
+          const transformedProblems = transformBackendProblems(response.data.problems);
+          setProblems(transformedProblems);
+          setFilteredProblems(transformedProblems);
+        }
+      } catch (error) {
+        console.error('Failed to get new recommendations:', error);
+      } finally {
+        setLoading(false);
+      }
     }
-    
-    return recommended.slice(0, settings.problemCount || 5);
   };
 
   return (

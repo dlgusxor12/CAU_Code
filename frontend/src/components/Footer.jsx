@@ -48,12 +48,10 @@ const Footer = () => {
               <a href="#" className="text-gray-300 hover:text-white text-sm transition-colors">개인정보처리방침</a>
               <a href="#" className="text-gray-300 hover:text-white text-sm transition-colors">이용약관</a>
               <a href="#" className="text-gray-300 hover:text-white text-sm transition-colors">사이트 소개</a>
-              <a href="#" className="text-gray-300 hover:text-white text-sm transition-colors">공지사항</a>
-              <a href="#" className="text-gray-300 hover:text-white text-sm transition-colors">채용정보</a>
             </div>
             <div className="text-gray-400 text-sm text-center md:text-right">
               <p>&copy; 2025 CAU Code. All rights reserved.</p>
-              <p className="mt-1">중앙대학교 소프트웨어학부</p>
+              <p className="mt-1">중앙대학교 소프트웨어학부 이현택</p>
             </div>
           </div>
         </div>

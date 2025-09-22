@@ -1,11 +1,74 @@
 import React, { useEffect, useState } from 'react';
+import { userService } from '../../services';
 
 const ContributionGraph = () => {
   const [monthlyData, setMonthlyData] = useState([]);
+  const [totalSolved, setTotalSolved] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    generateMonthlyContribution();
+    fetchContributionData();
   }, []);
+
+  const fetchContributionData = async () => {
+    try {
+      setLoading(true);
+      const response = await userService.getContribution();
+
+      if (response.status === 'success' && response.data?.daily_data) {
+        const dailyData = response.data.daily_data;
+        setTotalSolved(response.data.total_solved_this_year || 0);
+
+        // 월별로 데이터 그룹화
+        const groupedData = groupDataByMonth(dailyData);
+        setMonthlyData(groupedData);
+      } else {
+        // Fallback: 더미 데이터 생성
+        generateMonthlyContribution();
+      }
+    } catch (error) {
+      console.error('Failed to fetch contribution data:', error);
+      generateMonthlyContribution();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const groupDataByMonth = (dailyData) => {
+    const months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+    const data = [];
+
+    months.forEach((month, monthIndex) => {
+      const monthData = {
+        name: month,
+        weeks: []
+      };
+
+      // 해당 월의 데이터 필터링
+      const monthlyContributions = dailyData.filter(day => {
+        const date = new Date(day.date);
+        return date.getMonth() === monthIndex;
+      });
+
+      // 주별로 그룹화
+      const weeksInMonth = monthIndex === 1 ? 4 : 5;
+      for (let week = 0; week < weeksInMonth; week++) {
+        const weekData = [];
+        for (let day = 0; day < 7; day++) {
+          const dayIndex = week * 7 + day;
+          const contribution = monthlyContributions[dayIndex] || { solved_count: 0, date: '' };
+          weekData.push({
+            level: Math.min(4, contribution.solved_count),
+            tooltip: `${month} ${dayIndex + 1}일: ${contribution.solved_count}개 문제 해결`
+          });
+        }
+        monthData.weeks.push(weekData);
+      }
+      data.push(monthData);
+    });
+
+    return data;
+  };
 
   const generateMonthlyContribution = () => {
     const months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
@@ -41,8 +104,14 @@ const ContributionGraph = () => {
       <h3 className="text-xl font-semibold text-gray-900 mb-6">해결 목록</h3>
       <div className="space-y-4">
         <div className="flex items-center justify-between text-sm text-gray-600">
-          <span>2024년 문제 해결 현황</span>
-          <span>총 247개 문제 해결</span>
+          <span>2025년 문제 해결 현황</span>
+          <span>
+            {loading ? (
+              <div className="animate-pulse bg-gray-200 h-4 w-24 rounded"></div>
+            ) : (
+              `총 ${totalSolved.toLocaleString()}개 문제 해결`
+            )}
+          </span>
         </div>
         
         {/* 월별 해결 현황 */}
@@ -55,21 +124,38 @@ const ContributionGraph = () => {
           
           {/* 월별 그리드 */}
           <div className="grid grid-cols-12 gap-2">
-            {monthlyData.map((month, monthIndex) => (
-              <div key={monthIndex} className="space-y-1">
-                {month.weeks.map((week, weekIndex) => (
-                  <div key={weekIndex} className="flex space-x-1">
-                    {week.map((day, dayIndex) => (
-                      <div
-                        key={dayIndex}
-                        className={`contribution-day level-${day.level}`}
-                        title={day.tooltip}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            ))}
+            {loading ? (
+              Array.from({ length: 12 }).map((_, monthIndex) => (
+                <div key={monthIndex} className="space-y-1">
+                  {Array.from({ length: 5 }).map((_, weekIndex) => (
+                    <div key={weekIndex} className="flex space-x-1">
+                      {Array.from({ length: 7 }).map((_, dayIndex) => (
+                        <div
+                          key={dayIndex}
+                          className="w-2 h-2 bg-gray-200 rounded-sm animate-pulse"
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              ))
+            ) : (
+              monthlyData.map((month, monthIndex) => (
+                <div key={monthIndex} className="space-y-1">
+                  {month.weeks.map((week, weekIndex) => (
+                    <div key={weekIndex} className="flex space-x-1">
+                      {week.map((day, dayIndex) => (
+                        <div
+                          key={dayIndex}
+                          className={`contribution-day level-${day.level}`}
+                          title={day.tooltip}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              ))
+            )}
           </div>
         </div>
         

@@ -16,6 +16,8 @@ services:
       - NODE_ENV=development
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
+    env_file:
+      - .env
     restart: unless-stopped
     networks:
       - cau-code-network
@@ -36,6 +38,8 @@ services:
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
     restart: unless-stopped
     networks:
       - cau-code-network
