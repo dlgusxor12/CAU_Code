@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     openai_api_key: str
     app_name: str = "CAU Code Backend"
     debug: bool = True
-    cors_origins: list = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    cors_origins: list = ["http://localhost:5173", "http://127.0.0.1:5173","https://caucode.vercel.app"]
 
     model_config = {
         "env_file": "../.env",
