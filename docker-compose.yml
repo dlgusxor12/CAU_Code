@@ -21,6 +21,24 @@ services:
       - cau-code-network
     stdin_open: true
     tty: true
+
+  # FastAPI 백엔드 서버
+  cau-code-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cau-code-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # 소스 코드 동기화 (핫 리로드)
+      - ./backend:/app
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - cau-code-network
     
   # nginx (추후 프로덕션 배포용)
   nginx:
