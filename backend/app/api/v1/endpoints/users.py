@@ -3,6 +3,7 @@ from typing import Optional
 
 from app.services.solvedac_service import SolvedACService
 from app.services.gpt_service import GPTService
+from app.services.database_service import DatabaseService
 from app.schemas.user import (
     UserDashboardResponse,
     UserStatsResponse,
@@ -23,6 +24,7 @@ class UserEndpoints(LoggerMixin):
     def __init__(self):
         self.solvedac_service = SolvedACService()
         self.gpt_service = GPTService()
+        self.db_service = DatabaseService()
 
 
 user_endpoints = UserEndpoints()
@@ -93,10 +95,11 @@ async def get_user_stats(username: str):
 
 
 @router.get("/contribution/{username}", response_model=APIResponse[ContributionGraphResponse])
-async def get_contribution_graph(username: str, year: int = 2025):
-    """기여도 그래프 데이터 조회"""
+async def get_contribution_graph(username: str, months: int = 6):
+    """기여도 그래프 데이터 조회 (CAU Code 활동, 최근 6개월)"""
     try:
-        contribution_data = await user_endpoints.solvedac_service.get_contribution_graph(username, year)
+        # DB에서 CAU Code 활동 기반 기여도 데이터 조회
+        contribution_data = await user_endpoints.db_service.get_contribution_from_db(username, months)
 
         # 통계 계산
         total_solved = sum(day["solved_count"] for day in contribution_data)
@@ -111,7 +114,7 @@ async def get_contribution_graph(username: str, year: int = 2025):
                 current_streak = 0
 
         graph_data = ContributionGraphResponse(
-            year=year,
+            year=2025,  # 현재 연도로 고정
             daily_data=contribution_data,
             total_solved_this_year=total_solved,
             longest_streak=longest_streak
@@ -119,20 +122,21 @@ async def get_contribution_graph(username: str, year: int = 2025):
 
         return APIResponse(
             status="success",
-            message="기여도 그래프 데이터를 성공적으로 조회했습니다",
+            message="해결 목록 데이터를 성공적으로 조회했습니다",
             data=graph_data
         )
 
     except Exception as e:
         user_endpoints.log_error(f"Contribution graph error for {username}", e)
-        raise HTTPException(status_code=500, detail="기여도 그래프 조회 중 오류가 발생했습니다")
+        raise HTTPException(status_code=500, detail="해결 목록 조회 중 오류가 발생했습니다")
 
 
 @router.get("/activities/{username}", response_model=APIResponse[RecentActivityResponse])
-async def get_recent_activities(username: str, limit: int = 10):
-    """최근 활동 내역 조회"""
+async def get_recent_activities(username: str, limit: int = 3):
+    """최근 활동 내역 조회 (CAU Code 내 활동)"""
     try:
-        activities = await user_endpoints.solvedac_service.get_recent_activities(username, limit)
+        # DB에서 CAU Code 내 실제 활동 조회
+        activities = await user_endpoints.db_service.get_recent_activities_from_db(username, limit)
 
         activity_data = RecentActivityResponse(
             activities=activities,
@@ -152,16 +156,17 @@ async def get_recent_activities(username: str, limit: int = 10):
 
 @router.get("/weekly-stats/{username}", response_model=APIResponse[WeeklyStatsResponse])
 async def get_weekly_stats(username: str):
-    """이번 주 통계 조회"""
+    """이번 주 통계 조회 (DB 기반)"""
     try:
-        stats = await user_endpoints.solvedac_service.get_weekly_stats(username)
+        # DB에서 실제 통계 조회
+        stats = await user_endpoints.db_service.get_weekly_stats_from_db(username)
 
         weekly_data = WeeklyStatsResponse(
             problems_solved=stats.get("problems_solved", 0),
             new_algorithms=stats.get("new_algorithms", 0),
-            average_difficulty=stats.get("average_difficulty", 0.0),
-            consistency_score=stats.get("consistency_score", 0.0),
-            improvement_rate=stats.get("improvement_rate", 0.0)
+            feedback_requests=stats.get("feedback_requests", 0),  # 새로운 지표
+            average_difficulty=0.0,  # TODO: 나중에 구현
+            improvement_rate=0.0     # TODO: 나중에 구현
         )
 
         return APIResponse(
@@ -177,9 +182,16 @@ async def get_weekly_stats(username: str):
 
 @router.get("/todays-problems/{username}", response_model=APIResponse[TodaysProblemsResponse])
 async def get_todays_problems(username: str, count: int = 2):
-    """오늘의 문제 추천"""
+    """오늘의 문제 추천 (날짜별 고정)"""
     try:
-        problems = await user_endpoints.solvedac_service.get_todays_problems(username, count)
+        # DB에서 오늘 날짜 고정 문제 조회
+        db_problems = await user_endpoints.db_service.get_daily_problems_from_db(username, "today", count)
+
+        # DB에 없으면 solved.ac에서 조회하고 저장 (TODO: 나중에 구현)
+        if not db_problems:
+            problems = await user_endpoints.solvedac_service.get_todays_problems(username, count)
+        else:
+            problems = db_problems
 
         # 난이도 분포 계산
         difficulty_distribution = {}

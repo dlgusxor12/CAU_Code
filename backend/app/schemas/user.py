@@ -36,9 +36,9 @@ class RecentActivityResponse(BaseModel):
 class WeeklyStatsResponse(BaseModel):
     problems_solved: int = Field(..., description="이번 주 해결 문제 수")
     new_algorithms: int = Field(..., description="새로 학습한 알고리즘 수")
-    average_difficulty: float = Field(..., description="평균 문제 난이도")
-    consistency_score: float = Field(..., description="꾸준함 점수")
-    improvement_rate: float = Field(..., description="실력 향상도")
+    feedback_requests: int = Field(..., description="이번 주 피드백 요청 수")
+    average_difficulty: float = Field(0.0, description="평균 문제 난이도")
+    improvement_rate: float = Field(0.0, description="실력 향상도")
 
 
 class TodaysProblemsResponse(BaseModel):
