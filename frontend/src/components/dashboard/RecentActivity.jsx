@@ -22,24 +22,8 @@ const RecentActivity = () => {
         }));
         setActivities(formattedActivities);
       } else {
-        // Fallback 더미 데이터
-        setActivities([
-          {
-            time: '2시간 전',
-            description: '[1931] 회의실 배정 해결',
-            color: 'bg-green-500'
-          },
-          {
-            time: '5시간 전',
-            description: '코드 피드백 받음',
-            color: 'bg-blue-500'
-          },
-          {
-            time: '어제',
-            description: '[11047] 동전 0 해결',
-            color: 'bg-yellow-500'
-          }
-        ]);
+        // API에서 데이터가 없으면 빈 배열로 설정
+        setActivities([]);
       }
     } catch (error) {
       console.error('Failed to fetch recent activities:', error);
@@ -62,9 +46,9 @@ const RecentActivity = () => {
 
   const formatDescription = (activity) => {
     if (activity.type === 'problem_solved') {
-      return `[${activity.problem_id}] ${activity.problem_title || '문제'} 해결`;
-    } else if (activity.type === 'code_feedback') {
-      return `문제 ${activity.problem_id || ''} 코드 피드백 받음`;
+      return `[${activity.problem_id}] ${activity.problem_title || '문제'} 해결완료`;
+    } else if (activity.type === 'feedback_request') {
+      return `[${activity.problem_id}] ${activity.problem_title || '문제'} 피드백 요청`;
     }
     return activity.description || '활동 내역';
   };
@@ -72,7 +56,7 @@ const RecentActivity = () => {
   const getActivityColor = (type) => {
     switch (type) {
       case 'problem_solved': return 'bg-green-500';
-      case 'code_feedback': return 'bg-blue-500';
+      case 'feedback_request': return 'bg-purple-500';
       default: return 'bg-gray-500';
     }
   };

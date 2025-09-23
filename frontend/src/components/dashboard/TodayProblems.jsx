@@ -22,7 +22,7 @@ const TodayProblems = () => {
           title: problem.title,
           description: problem.description || `${problem.tier_name} 난이도의 문제입니다`,
           tier: problem.tier_name,
-          algorithm: problem.tags?.[0] || '미등록',
+          tags: problem.tags || ['미등록'], // 전체 태그 배열 저장
           tierColor: getTierColor(problem.tier),
           algorithmColor: 'bg-blue-100 text-blue-800'
         }));
@@ -67,7 +67,12 @@ const TodayProblems = () => {
     <div className="bg-white rounded-xl shadow-sm border p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-semibold text-gray-900">오늘의 문제</h3>
-        <span className="text-sm text-gray-500">{new Date().toISOString().split('T')[0]}</span>
+        <span className="text-sm text-gray-500">{new Intl.DateTimeFormat('ko-KR', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          timeZone: 'Asia/Seoul'
+        }).format(new Date()).replace(/\./g, '-').replace(/\s/g, '').replace(/-$/, '')}</span>
       </div>
       <div className="space-y-4">
         {loading ? (
@@ -95,13 +100,19 @@ const TodayProblems = () => {
                 <div>
                   <h4 className="font-medium text-gray-900">[{problem.id}] {problem.title}</h4>
                   <p className="text-sm text-gray-600 mt-1">{problem.description}</p>
-                  <div className="flex items-center space-x-2 mt-2">
+                  <div className="flex items-center flex-wrap gap-2 mt-2">
                     <span className={`px-2 py-1 text-xs rounded-full ${problem.tierColor}`}>
                       {problem.tier}
                     </span>
-                    <span className={`px-2 py-1 text-xs rounded-full ${problem.algorithmColor}`}>
-                      {problem.algorithm}
-                    </span>
+                    {problem.tags ? problem.tags.map((tag, index) => (
+                      <span key={index} className={`px-2 py-1 text-xs rounded-full ${problem.algorithmColor}`}>
+                        {tag}
+                      </span>
+                    )) : (
+                      <span className={`px-2 py-1 text-xs rounded-full ${problem.algorithmColor}`}>
+                        미등록
+                      </span>
+                    )}
                   </div>
                 </div>
                 <button

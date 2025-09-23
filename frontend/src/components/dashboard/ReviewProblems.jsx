@@ -22,7 +22,7 @@ const ReviewProblems = () => {
           title: problem.title,
           description: problem.description || '다시 도전해보세요!',
           tier: problem.tier_name,
-          algorithm: problem.tags?.[0]?.name || '미등록',
+          tags: problem.tags || ['미등록'], // 전체 태그 배열 저장
           status: '복습 필요',
           tierColor: getTierColor(problem.tier),
           algorithmColor: 'bg-purple-100 text-purple-800',
@@ -93,13 +93,19 @@ const ReviewProblems = () => {
                 <div>
                   <h4 className="font-medium text-gray-900">[{problem.id}] {problem.title}</h4>
                   <p className="text-sm text-gray-600 mt-1">{problem.description}</p>
-                  <div className="flex items-center space-x-2 mt-2">
+                  <div className="flex items-center flex-wrap gap-2 mt-2">
                     <span className={`px-2 py-1 text-xs rounded-full ${problem.tierColor}`}>
                       {problem.tier}
                     </span>
-                    <span className={`px-2 py-1 text-xs rounded-full ${problem.algorithmColor}`}>
-                      {problem.algorithm}
-                    </span>
+                    {problem.tags ? problem.tags.map((tag, index) => (
+                      <span key={index} className={`px-2 py-1 text-xs rounded-full ${problem.algorithmColor}`}>
+                        {tag}
+                      </span>
+                    )) : (
+                      <span className={`px-2 py-1 text-xs rounded-full ${problem.algorithmColor}`}>
+                        미등록
+                      </span>
+                    )}
                     <span className={`px-2 py-1 text-xs rounded-full ${problem.statusColor}`}>
                       {problem.status}
                     </span>

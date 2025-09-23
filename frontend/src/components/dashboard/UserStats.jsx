@@ -25,6 +25,22 @@ const UserStats = () => {
     fetchUserStats();
   }, []);
 
+  const getTierColor = (tierName) => {
+    if (!tierName || tierName === 'Unrated') return 'text-black';
+
+    const tierLower = tierName.toLowerCase();
+    // solved.ac 공식 티어 색상 기준
+    if (tierLower.includes('master')) return 'text-purple-600';      // Master: #8B00FF
+    if (tierLower.includes('ruby')) return 'text-pink-600';          // Ruby: #FF0062
+    if (tierLower.includes('diamond')) return 'text-sky-300';        // Diamond: #B9F2FF
+    if (tierLower.includes('platinum')) return 'text-cyan-500';      // Platinum: #00CED1
+    if (tierLower.includes('gold')) return 'text-yellow-500';        // Gold: #FFD700
+    if (tierLower.includes('silver')) return 'text-gray-400';        // Silver: #C0C0C0
+    if (tierLower.includes('bronze')) return 'text-amber-700';       // Bronze: #CD7F32
+
+    return 'text-gray-900';
+  };
+
   const fetchUserStats = async () => {
     try {
       setLoading(true);
@@ -41,7 +57,7 @@ const UserStats = () => {
           {
             label: '현재 티어',
             value: data.tier_name || 'Unrated',
-            textColor: 'tier-gold'
+            textColor: getTierColor(data.tier_name)
           },
           {
             label: '해결 문제',

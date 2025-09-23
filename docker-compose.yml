@@ -43,6 +43,28 @@ services:
     restart: unless-stopped
     networks:
       - cau-code-network
+    depends_on:
+      - cau-code-db
+
+  # PostgreSQL 데이터베이스
+  cau-code-db:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    container_name: cau-code-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - cau-code-network
     
   # nginx (추후 프로덕션 배포용)
   nginx:
@@ -65,3 +87,4 @@ networks:
 
 volumes:
   node_modules:
+  postgres_data:

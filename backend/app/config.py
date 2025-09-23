@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     app_name: str = "CAU Code Backend"
     debug: bool = True
     cors_origins: list = ["http://localhost:5173", "http://127.0.0.1:5173","https://caucode.vercel.app"]
+    database_url: str = "postgresql://caucode_user:dev_password_123@cau-code-db:5432/caucode"
 
     model_config = {
         "env_file": "../.env",
