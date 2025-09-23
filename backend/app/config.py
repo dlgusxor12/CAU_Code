@@ -10,6 +10,20 @@ class Settings(BaseSettings):
     cors_origins: list = ["http://localhost:5173", "http://127.0.0.1:5173","https://caucode.vercel.app"]
     database_url: str = "postgresql://caucode_user:dev_password_123@cau-code-db:5432/caucode"
 
+    # Authentication Settings
+    secret_key: str = "your-secret-key-change-in-production-please-use-complex-key"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+    refresh_token_expire_days: int = 7
+
+    # Google OAuth Settings
+    google_client_id: Optional[str] = None
+    google_client_secret: Optional[str] = None
+
+    # Profile Verification Settings
+    verification_code_expire_minutes: int = 5
+    max_verification_attempts: int = 3
+
     model_config = {
         "env_file": "../.env",
         "env_file_encoding": "utf-8",
