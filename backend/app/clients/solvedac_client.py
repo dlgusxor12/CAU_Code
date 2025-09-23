@@ -29,6 +29,10 @@ class SolvedACClient:
     async def get_user_info(self, username: str) -> Dict[str, Any]:
         return await self._request("GET", f"/user/show", params={"handle": username})
 
+    async def get_user_profile(self, username: str) -> Dict[str, Any]:
+        """사용자 프로필 정보 조회 (bio 포함)"""
+        return await self._request("GET", f"/user/show", params={"handle": username})
+
     async def get_user_problems(self, username: str) -> Dict[str, Any]:
         return await self._request("GET", f"/search/problem", params={
             "query": f"s@{username}",

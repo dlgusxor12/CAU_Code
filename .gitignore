@@ -20,6 +20,7 @@ lerna-debug.log*
 
 # Backend (Python)
 backend/__pycache__/
+backend/**/__pycache__/
 backend/*.py[cod]
 backend/*$py.class
 backend/*.so
@@ -42,6 +43,9 @@ backend/MANIFEST
 backend/venv/
 backend/env/
 backend/.venv/
+backend/.pytest_cache/
+backend/celerybeat-schedule
+backend/celerybeat.pid
 
 # Editor directories and files
 .vscode/*
@@ -53,6 +57,37 @@ backend/.venv/
 *.njsproj
 *.sln
 *.sw?
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Database
+database/data/
+database/postgres-data/
+database/pgdata/
+*.sql.backup
+*.sql.bak
+*.dump
+database/logs/
+database/backups/
+
+# Authentication & Security
+*.pem
+*.key
+*.crt
+*.csr
+jwt_keys/
+secrets/
+
+# Development
+*.swp
+*.swo
+*~
+.coverage
+htmlcov/
+.nyc_output
+coverage/
 
 # OS generated files
 Thumbs.db
