@@ -37,6 +37,16 @@ async def startup_event():
         logger = logging.getLogger(__name__)
         logger.info("CAU Code 백엔드 서비스 시작 중...")
 
+        # DB 테이블 자동 생성
+        try:
+            from app.database import init_database
+            await init_database()
+            logger.info("데이터베이스 테이블 초기화 완료")
+        except Exception as db_error:
+            logger.error(f"데이터베이스 초기화 실패: {str(db_error)}")
+            # DB 초기화 실패해도 서비스는 계속 진행
+            pass
+
         # 백그라운드 작업 큐 시작
         from app.core.background_tasks import background_task_queue
         await background_task_queue.start()
