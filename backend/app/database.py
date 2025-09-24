@@ -58,12 +58,10 @@ async def init_database():
                 );
             """))
 
-            # 인덱스들 생성
-            await session.execute(text("""
-                CREATE INDEX IF NOT EXISTS idx_username_created ON user_activities (username, created_at DESC);
-                CREATE INDEX IF NOT EXISTS idx_activity_type ON user_activities (activity_type);
-                CREATE INDEX IF NOT EXISTS idx_problem_id ON user_activities (problem_id);
-            """))
+            # 인덱스들 생성 (각각 따로 실행)
+            await session.execute(text("CREATE INDEX IF NOT EXISTS idx_username_created ON user_activities (username, created_at DESC)"))
+            await session.execute(text("CREATE INDEX IF NOT EXISTS idx_activity_type ON user_activities (activity_type)"))
+            await session.execute(text("CREATE INDEX IF NOT EXISTS idx_problem_id ON user_activities (problem_id)"))
 
             await session.commit()
 
