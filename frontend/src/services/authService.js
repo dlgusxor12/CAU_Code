@@ -90,8 +90,10 @@ class AuthService {
         throw new Error('Refresh token not found');
       }
 
+      // 인터셉터 무한루프 방지를 위해 _retry 플래그 추가
       const response = await apiClient.post('/auth/refresh-token', {}, {
-        headers: { Authorization: `Bearer ${refreshToken}` }
+        headers: { Authorization: `Bearer ${refreshToken}` },
+        _retry: true // 인터셉터에서 이 요청은 재시도하지 않음
       });
 
       const { access_token, refresh_token: newRefreshToken, user } = response.data;

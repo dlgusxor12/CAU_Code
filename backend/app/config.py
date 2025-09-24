@@ -11,14 +11,14 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://caucode_user:dev_password_123@cau-code-db:5432/caucode"
 
     # Authentication Settings
-    secret_key: str = "your-secret-key-change-in-production-please-use-complex-key"
-    algorithm: str = "HS256"
+    secret_key: str = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production-please-use-complex-key")
+    algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
 
     # Google OAuth Settings
-    google_client_id: Optional[str] = None
-    google_client_secret: Optional[str] = None
+    google_client_id: Optional[str] = os.getenv("GOOGLE_CLIENT_ID")
+    google_client_secret: Optional[str] = os.getenv("GOOGLE_CLIENT_SECRET")
 
     # Profile Verification Settings
     verification_code_expire_minutes: int = 5
