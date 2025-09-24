@@ -42,9 +42,10 @@ async def init_database():
             await conn.run_sync(Base.metadata.create_all)
 
         # 추가로 스키마 파일의 나머지 테이블들도 생성
+        from sqlalchemy import text
         async with AsyncSessionLocal() as session:
             # user_activities 테이블
-            await session.execute("""
+            await session.execute(text("""
                 CREATE TABLE IF NOT EXISTS user_activities (
                     id SERIAL PRIMARY KEY,
                     username VARCHAR(50) NOT NULL,
@@ -55,14 +56,14 @@ async def init_database():
                     metadata JSONB,
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
-            """)
+            """))
 
             # 인덱스들 생성
-            await session.execute("""
+            await session.execute(text("""
                 CREATE INDEX IF NOT EXISTS idx_username_created ON user_activities (username, created_at DESC);
                 CREATE INDEX IF NOT EXISTS idx_activity_type ON user_activities (activity_type);
                 CREATE INDEX IF NOT EXISTS idx_problem_id ON user_activities (problem_id);
-            """)
+            """))
 
             await session.commit()
 

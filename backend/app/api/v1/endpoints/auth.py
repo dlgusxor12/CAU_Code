@@ -21,19 +21,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# 디버그용 엔드포인트
-@router.get("/debug/config")
-async def debug_config():
-    """디버그용: 환경변수 설정 확인"""
-    from app.config import settings
-    return {
-        "google_client_id": settings.google_client_id[:10] + "..." if settings.google_client_id else None,
-        "google_client_secret": "SET" if settings.google_client_secret else None,
-        "database_url": settings.database_url[:20] + "..." if settings.database_url else None,
-        "jwt_secret": "SET" if settings.secret_key else None
-    }
-
-
 @router.post("/google-login", response_model=GoogleTokenResponse)
 @auth_rate_limit
 async def google_login(
