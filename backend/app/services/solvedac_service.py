@@ -52,8 +52,10 @@ class SolvedACService(LoggerMixin):
     async def get_user_solved_problems(self, username: str) -> List[Dict[str, Any]]:
         """사용자가 해결한 문제 목록"""
         try:
-            cache_key = f"solved_problems_{username}"
-            cached_data = self.cache.get(cache_key)
+            # 캐시에서 조회
+            from app.utils.cache import cache_key_for_user, cache
+            cache_key = cache_key_for_user(username, "solved_problems")
+            cached_data = cache.get(cache_key)
             if cached_data:
                 return cached_data
 
@@ -66,7 +68,7 @@ class SolvedACService(LoggerMixin):
                 problems.append(problem_data)
 
             # 캐시에 저장 (30분)
-            self.cache.set(cache_key, problems, ttl=1800)
+            cache.set(cache_key, problems, ttl_seconds=1800)
 
             duration = (datetime.now() - start_time).total_seconds()
             self.log_performance("get_user_solved_problems", duration, {

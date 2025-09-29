@@ -8,19 +8,15 @@ import { problemService } from '../services';
 const Problems = () => {
   const [problems, setProblems] = useState([]);
   const [filteredProblems, setFilteredProblems] = useState([]);
-  const [filters, setFilters] = useState({ tier_min: null, tier_max: null, algorithm: '', difficulty_class: null });
+  const [filters, setFilters] = useState({ tier_min: null, tier_max: null, difficulty_class: null });
   const [settings, setSettings] = useState({
-    recommendationType: 'adaptive',
-    problemCount: 5,
-    includeWrongProblems: true,
-    focusWeakAreas: true
+    recommendationType: 'ai_recommendation',
+    problemCount: 5
   });
   const [loading, setLoading] = useState(false);
+  const [hasRequestedRecommendation, setHasRequestedRecommendation] = useState(false);
 
-  useEffect(() => {
-    // 초기 문제 추천 로드
-    loadInitialRecommendations();
-  }, []);
+  // 초기 로드 제거 - 사용자가 직접 추천 요청해야 함
 
   useEffect(() => {
     // 필터링 적용
@@ -91,10 +87,20 @@ const Problems = () => {
     if (shouldRecommend) {
       try {
         setLoading(true);
+        setHasRequestedRecommendation(true);
+
+        // 기존 문제 목록 강제 초기화 (새로운 추천을 받기 전)
+        setProblems([]);
+        setFilteredProblems([]);
+
+        // 짧은 지연 후 API 호출 (상태 업데이트 보장)
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         const response = await problemService.getRecommendations({
           username: 'dlgusxor12',
           mode: newSettings.recommendationType,
-          count: newSettings.problemCount
+          count: newSettings.problemCount,
+          ...filters
         });
 
         if (response.status === 'success' && response.data) {
@@ -104,6 +110,9 @@ const Problems = () => {
         }
       } catch (error) {
         console.error('Failed to get new recommendations:', error);
+        // 오류 발생 시에도 빈 배열로 설정하여 "조건에 맞는 문제가 없습니다" 메시지 표시
+        setProblems([]);
+        setFilteredProblems([]);
       } finally {
         setLoading(false);
       }
@@ -163,13 +172,30 @@ const Problems = () => {
                   <p className="text-gray-600">당신에게 맞는 문제를 찾고 있습니다...</p>
                 </div>
               </div>
+            ) : !hasRequestedRecommendation ? (
+              <div className="text-center py-12">
+                <div className="text-gray-400 mb-4">
+                  <img
+                    src="/images/푸앙_열공.png"
+                    alt="푸앙"
+                    className="w-20 h-20 mx-auto opacity-60 mb-4"
+                  />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  문제 추천을 시작해보세요!
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  왼쪽의 "새로운 문제 추천받기" 버튼을 눌러<br />
+                  AI가 당신에게 맞는 문제를 추천받아보세요.
+                </p>
+              </div>
             ) : (
               <div className="space-y-4">
                 {filteredProblems.length > 0 ? (
                   filteredProblems.map((problem) => (
-                    <ProblemCard 
-                      key={problem.id} 
-                      problem={problem} 
+                    <ProblemCard
+                      key={problem.id}
+                      problem={problem}
                       showSolved={true}
                     />
                   ))

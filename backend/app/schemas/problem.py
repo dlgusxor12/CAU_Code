@@ -1,11 +1,11 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 from enum import Enum
 
 
 class RecommendationMode(str, Enum):
-    ADAPTIVE = "adaptive"
-    SIMILAR = "similar"
+    AI_RECOMMENDATION = "ai_recommendation"
+    APPROPRIATE_DIFFICULTY = "appropriate_difficulty"
     CHALLENGE = "challenge"
 
 
@@ -91,10 +91,9 @@ class ProblemVerificationResponse(BaseModel):
 
 
 class ProblemStatsResponse(BaseModel):
-    total_problems_available: int = Field(..., description="추천 가능한 문제 수")
-    problems_recommended_this_week: int = Field(..., description="이번 주 추천된 문제 수")
-    recommendation_accuracy: float = Field(..., description="추천 정확도")
-    user_tier_range: Dict[str, int] = Field(..., description="사용자 티어 범위")
+    ai_recommended_problems_count: int = Field(..., description="AI가 추천해준 문제 수")
+    user_completion_rate: float = Field(..., description="사용자 해결 완료율")
+    current_user_tier: Dict[str, Any] = Field(..., description="현재 사용자 티어 정보")
 
 
 class ProblemFilterRequest(BaseModel):
