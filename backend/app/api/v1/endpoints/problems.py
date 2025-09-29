@@ -32,7 +32,7 @@ problem_endpoints = ProblemEndpoints()
 @router.get("/recommendations", response_model=APIResponse[ProblemRecommendationResponse])
 async def get_problem_recommendations(
     username: str = Query(..., description="사용자명"),
-    mode: RecommendationMode = Query(RecommendationMode.ADAPTIVE, description="추천 모드"),
+    mode: RecommendationMode = Query(RecommendationMode.AI_RECOMMENDATION, description="추천 모드"),
     count: int = Query(10, ge=1, le=50, description="추천할 문제 개수"),
     tier_min: Optional[int] = Query(None, ge=0, le=31, description="최소 티어"),
     tier_max: Optional[int] = Query(None, ge=0, le=31, description="최대 티어"),

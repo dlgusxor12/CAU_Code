@@ -15,15 +15,15 @@ const RecommendationSettings = ({ onSettingsChange }) => {
   };
 
   const recommendationTypes = [
-    { 
-      value: 'adaptive', 
-      label: '적응형 추천', 
-      description: 'AI가 당신의 실력에 맞는 문제를 추천합니다' 
+    {
+      value: 'ai_recommendation',
+      label: 'AI 추천',
+      description: 'AI가 당신의 실력에 맞는 문제를 추천합니다'
     },
-    { 
-      value: 'similar', 
-      label: '유사 문제', 
-      description: '최근 풀었던 문제와 유사한 유형을 추천합니다' 
+    {
+      value: 'appropriate_difficulty',
+      label: '적정 난이도',
+      description: '현재 티어에 적합한 난이도의 문제를 추천합니다'
     },
     { 
       value: 'challenge', 
@@ -79,28 +79,6 @@ const RecommendationSettings = ({ onSettingsChange }) => {
           </div>
         </div>
 
-        {/* 추가 옵션들 */}
-        <div className="space-y-3">
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={settings.includeWrongProblems}
-              onChange={(e) => handleSettingChange('includeWrongProblems', e.target.checked)}
-              className="text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm text-gray-700">틀렸던 문제 유형 포함</span>
-          </label>
-          
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={settings.focusWeakAreas}
-              onChange={(e) => handleSettingChange('focusWeakAreas', e.target.checked)}
-              className="text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm text-gray-700">약한 영역 집중 학습</span>
-          </label>
-        </div>
 
         {/* 추천 받기 버튼 */}
         <button 

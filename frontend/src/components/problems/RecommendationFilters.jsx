@@ -5,39 +5,32 @@ const RecommendationFilters = ({ onFilterChange }) => {
   const [filters, setFilters] = useState({
     tier_min: null,
     tier_max: null,
-    algorithm: '',
     difficulty_class: null
   });
-  const [filterOptions, setFilterOptions] = useState({
-    available_tiers: [],
-    available_algorithms: [],
-    difficulty_classes: []
-  });
+  // 하드코딩된 티어 옵션 (브론즈, 실버, 골드 단위)
+  const tierOptions = [
+    { value: 1, label: '브론즈' },
+    { value: 6, label: '실버' },
+    { value: 11, label: '골드' },
+    { value: 16, label: '플래티넘' },
+    { value: 21, label: '다이아몬드' },
+    { value: 26, label: '루비' }
+  ];
 
-  useEffect(() => {
-    loadFilterOptions();
-  }, []);
+  // 하드코딩된 클래스 옵션 (1-10)
+  const classOptions = Array.from({ length: 10 }, (_, i) => i + 1);
 
-  const loadFilterOptions = async () => {
-    try {
-      const response = await problemService.getFilterOptions();
-      if (response.status === 'success' && response.data) {
-        setFilterOptions(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to load filter options:', error);
-    }
-  };
+  // API 호출 제거 - 하드코딩된 옵션 사용
 
   const handleFilterChange = (key, value) => {
-    const parsedValue = value === '' ? null : (key.includes('tier') || key === 'difficulty_class' ? parseInt(value) : value);
+    const parsedValue = value === '' ? null : parseInt(value);
     const newFilters = { ...filters, [key]: parsedValue };
     setFilters(newFilters);
     onFilterChange(newFilters);
   };
 
   const clearFilters = () => {
-    const clearedFilters = { tier_min: null, tier_max: null, algorithm: '', difficulty_class: null };
+    const clearedFilters = { tier_min: null, tier_max: null, difficulty_class: null };
     setFilters(clearedFilters);
     onFilterChange(clearedFilters);
   };
@@ -54,7 +47,7 @@ const RecommendationFilters = ({ onFilterChange }) => {
         </button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* 최소 티어 필터 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">최소 티어</label>
@@ -64,8 +57,8 @@ const RecommendationFilters = ({ onFilterChange }) => {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="">선택 없음</option>
-            {filterOptions.available_tiers.map(tier => (
-              <option key={tier.tier_id} value={tier.tier_id}>{tier.tier_name}</option>
+            {tierOptions.map(tier => (
+              <option key={tier.value} value={tier.value}>{tier.label}</option>
             ))}
           </select>
         </div>
@@ -79,25 +72,8 @@ const RecommendationFilters = ({ onFilterChange }) => {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="">선택 없음</option>
-            {filterOptions.available_tiers.map(tier => (
-              <option key={tier.tier_id} value={tier.tier_id}>{tier.tier_name}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* 알고리즘 필터 */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">알고리즘</label>
-          <select
-            value={filters.algorithm || ''}
-            onChange={(e) => handleFilterChange('algorithm', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">모든 알고리즘</option>
-            {filterOptions.available_algorithms.map(algorithm => (
-              <option key={algorithm.tag_name} value={algorithm.tag_name}>
-                {algorithm.tag_name} ({algorithm.problem_count})
-              </option>
+            {tierOptions.map(tier => (
+              <option key={tier.value} value={tier.value}>{tier.label}</option>
             ))}
           </select>
         </div>
@@ -111,8 +87,8 @@ const RecommendationFilters = ({ onFilterChange }) => {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="">모든 난이도</option>
-            {filterOptions.difficulty_classes.map(difficulty => (
-              <option key={difficulty} value={difficulty}>클래스 {difficulty}</option>
+            {classOptions.map(classNum => (
+              <option key={classNum} value={classNum}>클래스 {classNum}</option>
             ))}
           </select>
         </div>
