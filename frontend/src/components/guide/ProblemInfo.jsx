@@ -30,7 +30,7 @@ const ProblemInfo = ({ problemNumber }) => {
           tier: getTierName(data.tier),
           tags: data.algorithms || [],
           submissions: data.submission_count,
-          correct: data.accepted_count,
+          averageTries: data.accepted_count,
           users: data.solved_count,
           correctRate: data.success_rate ? Math.round(data.success_rate * 100) / 100 : 0
         });
@@ -45,7 +45,7 @@ const ProblemInfo = ({ problemNumber }) => {
         tier: '알 수 없음',
         tags: [],
         submissions: 0,
-        correct: 0,
+        averageTries: 0,
         users: 0,
         correctRate: 0
       });
@@ -145,8 +145,8 @@ const ProblemInfo = ({ problemNumber }) => {
           <span className="ml-2 text-gray-600">{problemInfo.submissions.toLocaleString()}</span>
         </div>
         <div>
-          <span className="font-medium text-gray-700">정답:</span>
-          <span className="ml-2 text-gray-600">{problemInfo.correct.toLocaleString()}</span>
+          <span className="font-medium text-gray-700">평균 시도:</span>
+          <span className="ml-2 text-gray-600">{problemInfo.averageTries}</span>
         </div>
         <div>
           <span className="font-medium text-gray-700">맞힌 사람:</span>

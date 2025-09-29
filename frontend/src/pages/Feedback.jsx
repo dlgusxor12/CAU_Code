@@ -2,12 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { analysisService } from '../services';
 
+// 언어 코드를 사용자 친화적 이름으로 변환하는 함수
+const getLanguageDisplayName = (languageCode) => {
+  const languageMap = {
+    'python': 'Python',
+    'java': 'Java',
+    'cpp': 'C++',
+    'c': 'C',
+    'javascript': 'JavaScript',
+    'typescript': 'TypeScript',
+    'go': 'Go',
+    'rust': 'Rust',
+    'kotlin': 'Kotlin',
+    'swift': 'Swift'
+  };
+  return languageMap[languageCode] || languageCode.toUpperCase();
+};
+
 const Feedback = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [feedback, setFeedback] = useState(null);
   const [loading, setLoading] = useState(true);
   const [problemNumber, setProblemNumber] = useState('');
+  const [language, setLanguage] = useState('python'); // 기본값
   const [showAICode, setShowAICode] = useState(false);
   const [aiCode, setAiCode] = useState(null);
   const [loadingAICode, setLoadingAICode] = useState(false);
@@ -30,12 +48,18 @@ const Feedback = () => {
 
       if (response.status === 'success' && response.data) {
         const data = response.data;
+
+        // 언어 정보 저장
+        if (data.language) {
+          setLanguage(data.language);
+        }
+
         setFeedback({
-          title: `문제 ${problemNumber}번 피드백`,
+          title: `문제 ${location.state?.problemNumber || problemNumber}번 피드백`,
           score: data.score,
           strengths: data.strengths ? data.strengths.split('\n').filter(s => s.trim()) : ['코드가 정상적으로 작동합니다'],
           improvements: data.improvements ? data.improvements.split('\n').filter(s => s.trim()) : ['더 효율적인 방법을 고려해보세요'],
-          suggestions: data.core_concept ? [data.core_concept] : ['다양한 방법으로 문제를 접근해보세요'],
+          suggestions: data.core_concept ? data.core_concept.split('\n').filter(s => s.trim()) : ['다양한 방법으로 문제를 접근해보세요'],
           timeComplexity: {
             analysis: data.time_complexity || 'O(n)',
             description: `${data.algorithm_type || '구현'} 알고리즘을 사용한 솔루션입니다.`,
@@ -61,7 +85,7 @@ const Feedback = () => {
       setLoadingAICode(true);
       const response = await analysisService.getOptimizedCode({
         problem_id: parseInt(problemNumber),
-        language: 'python', // 기본 언어
+        language: language, // 실제 제출한 언어 사용
         current_code: feedback.code
       });
 
@@ -74,9 +98,17 @@ const Feedback = () => {
       }
     } catch (error) {
       console.error('Failed to fetch AI optimized code:', error);
+      let errorMessage = '현재 AI 최적화 서비스를 이용할 수 없습니다.';
+
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        errorMessage = 'AI 코드 생성에 시간이 오래 걸리고 있습니다. 잠시 후 다시 시도해주세요.';
+      } else if (error.response?.status === 500) {
+        errorMessage = '서버에서 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+      }
+
       setAiCode({
         code: '// AI 최적화 코드를 불러올 수 없습니다',
-        explanation: '현재 AI 최적화 서비스를 이용할 수 없습니다.',
+        explanation: errorMessage,
         insights: []
       });
     } finally {
@@ -92,11 +124,12 @@ const Feedback = () => {
   };
 
   const handleRetry = () => {
-    navigate('/guide', { 
-      state: { 
+    navigate('/guide', {
+      state: {
         problemId: problemNumber,
-        isRetry: true 
-      } 
+        previousCode: feedback?.code,
+        isRetry: true
+      }
     });
   };
 
@@ -190,7 +223,12 @@ const Feedback = () => {
       {/* 제출한 코드 */}
       <div className="mb-8">
         <div className="bg-gray-50 rounded-xl p-6 border">
-          <h3 className="text-lg font-semibold text-[#143365] mb-4">제출한 코드</h3>
+          <div className="flex items-center gap-3 mb-4">
+            <h3 className="text-lg font-semibold text-[#143365]">제출한 코드</h3>
+            <span className="px-3 py-1 bg-[#2B95C3] text-white text-sm rounded-full font-medium">
+              {getLanguageDisplayName(language)}
+            </span>
+          </div>
           <div className="bg-gray-800 rounded-lg p-4 overflow-x-auto">
             <pre className="text-gray-100 text-sm">
               <code>{feedback.code}</code>

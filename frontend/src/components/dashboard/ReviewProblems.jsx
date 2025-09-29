@@ -20,7 +20,7 @@ const ReviewProblems = () => {
         const formattedProblems = response.data.review_problems.map(problem => ({
           id: problem.problem_id,
           title: problem.title,
-          description: problem.description || '다시 도전해보세요!',
+          description: problem.review_reason || '다시 도전해보세요!',
           tier: problem.tier_name,
           tags: problem.tags || ['미등록'], // 전체 태그 배열 저장
           status: '복습 필요',

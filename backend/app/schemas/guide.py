@@ -10,7 +10,7 @@ class ProblemDetailResponse(BaseModel):
     time_limit: int  # milliseconds
     memory_limit: int  # KB
     submission_count: int
-    accepted_count: int
+    accepted_count: float
     solved_count: int
     success_rate: float
     tier: int

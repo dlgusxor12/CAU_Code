@@ -55,6 +55,7 @@ async def analyze_code(
             core_concept=analysis_result["core_concept"],
             time_complexity=analysis_result["time_complexity"],
             algorithm_type=analysis_result["algorithm_type"],
+            language=analysis_result["language"],
             analysis_timestamp=analysis_result["analysis_timestamp"]
         )
 
@@ -103,6 +104,7 @@ async def analyze_submitted_code(
             core_concept=analysis_result["core_concept"],
             time_complexity=analysis_result["time_complexity"],
             algorithm_type=analysis_result["algorithm_type"],
+            language=analysis_result["language"],
             analysis_timestamp=analysis_result["analysis_timestamp"]
         )
 
