@@ -92,8 +92,7 @@ const Feedback = () => {
       if (response.status === 'success' && response.data) {
         setAiCode({
           code: response.data.optimized_code,
-          explanation: response.data.explanation,
-          insights: response.data.key_insights || []
+          explanation: response.data.explanation
         });
       }
     } catch (error) {
@@ -108,8 +107,7 @@ const Feedback = () => {
 
       setAiCode({
         code: '// AI 최적화 코드를 불러올 수 없습니다',
-        explanation: errorMessage,
-        insights: []
+        explanation: errorMessage
       });
     } finally {
       setLoadingAICode(false);
@@ -269,16 +267,6 @@ const Feedback = () => {
                     <p className="text-sm text-blue-700">
                       {aiCode.explanation || '이 코드는 더 효율적인 알고리즘과 최적화 기법을 적용한 버전입니다.'}
                     </p>
-                    {aiCode.insights && aiCode.insights.length > 0 && (
-                      <div className="mt-3">
-                        <h5 className="font-medium text-blue-900 mb-1">핵심 개선 사항:</h5>
-                        <ul className="text-sm text-blue-700 list-disc list-inside">
-                          {aiCode.insights.map((insight, index) => (
-                            <li key={index}>{insight}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
                   </div>
                 </>
               ) : (

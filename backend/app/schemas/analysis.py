@@ -32,7 +32,6 @@ class OptimizedCodeResponse(BaseModel):
     explanation: str = Field(..., description="코드 설명 (시간복잡도 포함)")
     time_complexity: str = Field(..., description="시간 복잡도")
     space_complexity: str = Field(..., description="공간 복잡도")
-    key_insights: List[str] = Field(..., description="핵심 개념들")
     performance_comparison: Optional[Dict] = Field(None, description="성능 비교")
 
 
