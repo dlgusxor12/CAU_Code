@@ -154,11 +154,6 @@ class AnalysisService(LoggerMixin):
                 "explanation": optimization_result.get("explanation", "최적화된 솔루션을 생성하는 중 오류가 발생했습니다."),
                 "time_complexity": format_time_complexity("O(n)"),  # 기본값
                 "space_complexity": "O(1)",  # 기본값
-                "key_insights": [
-                    "효율적인 알고리즘 선택",
-                    "최적화된 자료구조 사용",
-                    "시간복잡도 개선"
-                ],
                 "problem_id": problem_id,
                 "language": language,
                 "generated_at": datetime.now()

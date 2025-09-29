@@ -145,7 +145,6 @@ async def get_optimized_code(
             explanation=optimization_result["explanation"],
             time_complexity=optimization_result["time_complexity"],
             space_complexity=optimization_result["space_complexity"],
-            key_insights=optimization_result["key_insights"],
             performance_comparison=optimization_result.get("performance_comparison")
         )
 
