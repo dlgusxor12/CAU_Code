@@ -93,8 +93,8 @@ class AnalysisService(LoggerMixin):
         )
         algorithm_type = raw_result.get("algorithm_type", "구현")
 
-        # 핵심 설명 생성
-        core_concept = generate_algorithm_explanation(algorithm_type)
+        # AI로부터 받은 핵심 개념 사용 (하드코딩된 설명 대신)
+        core_concept = raw_result.get("core_concept", generate_algorithm_explanation(algorithm_type))
 
         return {
             "score": score,
@@ -104,9 +104,9 @@ class AnalysisService(LoggerMixin):
             "core_concept": core_concept,
             "time_complexity": time_complexity,
             "algorithm_type": algorithm_type,
+            "language": language,
             "analysis_timestamp": datetime.now(),
-            "problem_id": problem_id,
-            "language": language
+            "problem_id": problem_id
         }
 
     async def generate_optimized_code(

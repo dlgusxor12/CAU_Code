@@ -23,6 +23,11 @@ const Guide = () => {
       setProblemNumber(location.state.problemId.toString());
       setIsReadOnly(true);
     }
+
+    // 피드백 페이지에서 온 경우 이전 코드 설정
+    if (location.state?.previousCode && location.state?.isRetry) {
+      setCode(location.state.previousCode);
+    }
   }, [location.state]);
 
   const handleSubmit = (type) => {

@@ -17,7 +17,7 @@ class GuideService:
         self.supported_languages = {
             "python": LanguageInfo(
                 language="python",
-                display_name="Python 3",
+                display_name="Python",
                 extension=".py",
                 compile_command=None,
                 run_command="python3 {file}"
@@ -45,7 +45,7 @@ class GuideService:
             ),
             "javascript": LanguageInfo(
                 language="javascript",
-                display_name="JavaScript (Node.js)",
+                display_name="JavaScript",
                 extension=".js",
                 compile_command=None,
                 run_command="node {file}"
@@ -165,7 +165,7 @@ rl.on('line', (input) => {
                 time_limit=problem_data.get("timeLimit", 1000),
                 memory_limit=problem_data.get("memoryLimit", 128000),
                 submission_count=estimated_submission_count,
-                accepted_count=estimated_submission_count,  # 총 정답 제출 횟수 (추정)
+                accepted_count=round(average_tries, 2),  # 평균 시도 횟수
                 solved_count=accepted_user_count,  # 맞힌 사람 수
                 success_rate=success_rate,
                 tier=problem_data.get("level", 0),

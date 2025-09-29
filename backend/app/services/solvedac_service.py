@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 import random
+import hashlib
 
 from app.clients.solvedac_client import SolvedACClient
 from app.utils.helpers import (
@@ -86,16 +87,35 @@ class SolvedACService(LoggerMixin):
             user_tier = user_info.get("tier", 0)
             tier_range = calculate_tier_range_for_recommendations(user_tier)
 
-            # 사용자 티어 기반 문제 검색
+            # 사용자 티어 기반 문제 검색 (날짜별 고정)
             start_time = datetime.now()
             raw_problems = await self.client.search_problems(
                 tier=tier_range,
-                count=count * 3,  # 여분으로 더 가져와서 필터링
-                sort="random"
+                count=count * 10,  # 더 많이 가져와서 날짜 기반 선택
+                sort="id"  # ID 순 정렬로 일관성 보장
             )
 
+            # 날짜 기반 결정론적 문제 선택
+            today = datetime.now().strftime("%Y-%m-%d")
+            seed_string = f"{username}_{today}"
+            seed_hash = int(hashlib.md5(seed_string.encode()).hexdigest(), 16)
+
+            available_problems = raw_problems.get("items", [])
+            if len(available_problems) >= count:
+                # 해시 기반으로 결정론적 선택
+                selected_indices = []
+                for i in range(count):
+                    index = (seed_hash + i * 7) % len(available_problems)  # 7로 곱해서 분산
+                    while index in selected_indices:  # 중복 방지
+                        index = (index + 1) % len(available_problems)
+                    selected_indices.append(index)
+
+                selected_problems = [available_problems[i] for i in selected_indices]
+            else:
+                selected_problems = available_problems[:count]
+
             recommended_problems = []
-            for item in raw_problems.get("items", [])[:count]:
+            for item in selected_problems:
                 problem_data = format_solved_ac_problem_data(item)
 
                 # 추가 정보 계산
@@ -123,54 +143,124 @@ class SolvedACService(LoggerMixin):
             raise
 
     async def get_review_problems(self, username: str, count: int = 2) -> List[Dict[str, Any]]:
-        """복습할 문제 추천"""
+        """복습할 문제 추천 - 틀린 문제 개수에 따른 전략"""
         try:
             user_info = await self.get_user_info(username)
             user_tier = user_info.get("tier", 0)
-
-            # 틀린 문제 검색 시도
             start_time = datetime.now()
 
+            # 1. 틀린 문제들 가져오기
+            unsolved_problems = []
             try:
-                # 시도했지만 해결하지 못한 문제 검색
-                raw_problems = await self.client.get_user_unsolved_problems(username)
+                raw_unsolved = await self.client.get_user_unsolved_problems(username)
+                unsolved_items = raw_unsolved.get("items", [])
 
-                review_problems = []
-                for item in raw_problems.get("items", [])[:count]:
-                    problem_data = format_solved_ac_problem_data(item)
-                    problem_data.update({
-                        "review_reason": "이전에 시도했던 문제입니다",
-                        "last_attempt": None,  # 실제로는 API에서 가져와야 함
-                        "mistake_count": random.randint(1, 3)  # 더미 데이터
-                    })
-                    review_problems.append(problem_data)
+                # 날짜 기반 결정론적 선택 (오늘의 문제와 동일 방식)
+                if unsolved_items:
+                    today = datetime.now().strftime("%Y-%m-%d")
+                    seed_string = f"{username}_review_unsolved_{today}"
+                    seed_hash = int(hashlib.md5(seed_string.encode()).hexdigest(), 16)
 
-            except Exception:
-                # 실패하면 비슷한 티어의 문제로 대체
-                tier_range = f"s{max(1, user_tier-2)}..s{min(10, user_tier+1)}"
-                raw_problems = await self.client.search_problems(
-                    tier=tier_range,
-                    count=count,
-                    sort="random"
-                )
+                    # 틀린 문제들을 날짜별 고정 선택
+                    selected_unsolved = []
+                    for i in range(min(len(unsolved_items), count)):
+                        index = (seed_hash + i * 5) % len(unsolved_items)
+                        while index in [unsolved_items.index(item) for item in selected_unsolved]:
+                            index = (index + 1) % len(unsolved_items)
+                        selected_unsolved.append(unsolved_items[index])
 
-                review_problems = []
-                for item in raw_problems.get("items", []):
-                    problem_data = format_solved_ac_problem_data(item)
-                    problem_data.update({
-                        "review_reason": "비슷한 유형의 문제를 연습해보세요",
-                        "last_attempt": None,
-                        "mistake_count": 0
-                    })
-                    review_problems.append(problem_data)
+                    for item in selected_unsolved:
+                        problem_data = format_solved_ac_problem_data(item)
+                        problem_data.update({
+                            "review_reason": "이전에 시도했지만 틀린 문제입니다",
+                            "review_type": "unsolved",
+                            "last_attempt": None,
+                            "mistake_count": random.randint(1, 3)
+                        })
+                        unsolved_problems.append(problem_data)
+
+            except Exception as e:
+                self.log_error(f"Failed to get unsolved problems for {username}", e)
+
+            # 2. 해결한 문제들 가져오기 (부족한 경우 사용)
+            solved_problems = []
+            if len(unsolved_problems) < count:
+                try:
+                    raw_solved = await self.client.get_user_problems(username)
+                    solved_items = raw_solved.get("items", [])
+
+                    if solved_items:
+                        today = datetime.now().strftime("%Y-%m-%d")
+                        seed_string = f"{username}_review_solved_{today}"
+                        seed_hash = int(hashlib.md5(seed_string.encode()).hexdigest(), 16)
+
+                        needed_count = count - len(unsolved_problems)
+                        selected_solved = []
+
+                        for i in range(min(len(solved_items), needed_count)):
+                            index = (seed_hash + i * 11) % len(solved_items)
+                            while index in [solved_items.index(item) for item in selected_solved]:
+                                index = (index + 1) % len(solved_items)
+                            selected_solved.append(solved_items[index])
+
+                        for item in selected_solved:
+                            problem_data = format_solved_ac_problem_data(item)
+                            problem_data.update({
+                                "review_reason": "이전에 해결한 문제를 다시 복습해보세요",
+                                "review_type": "solved",
+                                "last_attempt": None,
+                                "mistake_count": 0
+                            })
+                            solved_problems.append(problem_data)
+
+                except Exception as e:
+                    self.log_error(f"Failed to get solved problems for {username}", e)
+
+            # 3. 최종 결과 조합
+            review_problems = unsolved_problems + solved_problems
+
+            # 4. 여전히 부족한 경우 비슷한 티어 문제로 대체
+            if len(review_problems) < count:
+                remaining_count = count - len(review_problems)
+                tier_range = calculate_tier_range_for_recommendations(user_tier)
+
+                try:
+                    raw_fallback = await self.client.search_problems(
+                        tier=tier_range,
+                        count=remaining_count * 5,
+                        sort="id"
+                    )
+
+                    fallback_items = raw_fallback.get("items", [])
+                    if fallback_items:
+                        today = datetime.now().strftime("%Y-%m-%d")
+                        seed_string = f"{username}_review_fallback_{today}"
+                        seed_hash = int(hashlib.md5(seed_string.encode()).hexdigest(), 16)
+
+                        for i in range(min(len(fallback_items), remaining_count)):
+                            index = (seed_hash + i * 13) % len(fallback_items)
+                            item = fallback_items[index]
+                            problem_data = format_solved_ac_problem_data(item)
+                            problem_data.update({
+                                "review_reason": "실력 향상을 위한 추천 문제입니다",
+                                "review_type": "recommendation",
+                                "last_attempt": None,
+                                "mistake_count": 0
+                            })
+                            review_problems.append(problem_data)
+
+                except Exception as e:
+                    self.log_error(f"Failed to get fallback problems for {username}", e)
 
             duration = (datetime.now() - start_time).total_seconds()
             self.log_performance("get_review_problems", duration, {
                 "username": username,
-                "count": len(review_problems)
+                "total_count": len(review_problems),
+                "unsolved_count": len(unsolved_problems),
+                "solved_count": len(solved_problems)
             })
 
-            return review_problems
+            return review_problems[:count]  # 정확히 count 개수만 반환
 
         except Exception as e:
             self.log_error(f"Failed to get review problems for {username}", e)

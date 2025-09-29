@@ -28,7 +28,7 @@ const LanguageSelector = ({ language, setLanguage }) => {
       // 실패 시 기본 언어 목록 사용
       setLanguages([
         { language: '', display_name: '언어를 선택하세요' },
-        { language: 'python', display_name: 'Python 3' },
+        { language: 'python', display_name: 'Python' },
         { language: 'java', display_name: 'Java' },
         { language: 'cpp', display_name: 'C++' },
         { language: 'c', display_name: 'C' },

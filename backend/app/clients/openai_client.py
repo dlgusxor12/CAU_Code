@@ -9,13 +9,13 @@ class OpenAIClient:
         self.client = AsyncOpenAI(api_key=settings.openai_api_key)
         self.model = "gpt-4o"
 
-    async def _chat_completion(self, messages: List[Dict[str, str]], temperature: float = 0.7) -> str:
+    async def _chat_completion(self, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 1000) -> str:
         try:
             response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
                 temperature=temperature,
-                max_tokens=1000
+                max_tokens=max_tokens
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
@@ -25,15 +25,18 @@ class OpenAIClient:
         messages = [
             {
                 "role": "system",
-                "content": """You are a coding expert who analyzes code quality and provides feedback.
-                Analyze the given code and return a JSON response with the following structure:
+                "content": """You are a coding expert who analyzes code quality and provides detailed feedback.
+                Analyze the given code and return ONLY a valid JSON response with the following structure:
                 {
                     "score": (integer 0-100),
-                    "strengths": "string (max 100 characters in Korean)",
-                    "improvements": "string (max 100 characters in Korean)",
-                    "time_complexity": "string (e.g., O(n), O(log n))",
-                    "algorithm_type": "string (algorithm category in Korean)"
-                }"""
+                    "strengths": "구체적인 장점을 한국어로 설명 (최대 100자)",
+                    "improvements": "구체적인 개선점을 한국어로 설명 (최대 100자)",
+                    "time_complexity": "시간복잡도 (예: O(n), O(log n), O(n²))",
+                    "algorithm_type": "알고리즘 유형을 한국어로 (예: 구현, 정렬, 탐색, 동적계획법)",
+                    "core_concept": "이 문제를 해결하기 위한 핵심 접근법이나 추천 학습 방향을 한국어로 (최대 100자)"
+                }
+
+                Do not include any text outside the JSON response."""
             },
             {
                 "role": "user",
@@ -52,27 +55,55 @@ class OpenAIClient:
 
         try:
             import json
-            return json.loads(response)
-        except json.JSONDecodeError:
+            # OpenAI 응답에서 JSON 부분만 추출
+            response_clean = response.strip()
+            if response_clean.startswith('```json'):
+                response_clean = response_clean[7:]
+            if response_clean.endswith('```'):
+                response_clean = response_clean[:-3]
+
+            # JSON 파싱 시도
+            parsed_response = json.loads(response_clean.strip())
+
+            # 필수 필드 검증 및 기본값 설정
+            return {
+                "score": parsed_response.get("score", 75),
+                "strengths": parsed_response.get("strengths", "코드 구조가 깔끔합니다"),
+                "improvements": parsed_response.get("improvements", "변수명을 더 명확하게 작성해보세요"),
+                "time_complexity": parsed_response.get("time_complexity", "O(n)"),
+                "algorithm_type": parsed_response.get("algorithm_type", "구현"),
+                "core_concept": parsed_response.get("core_concept", "문제의 핵심 개념을 파악하여 체계적으로 접근해보세요")
+            }
+        except (json.JSONDecodeError, KeyError, AttributeError) as e:
+            # 로깅 추가
+            print(f"OpenAI JSON 파싱 오류: {e}")
+            print(f"원본 응답: {response}")
+
+            # 기본값 반환
             return {
                 "score": 75,
                 "strengths": "코드가 정상적으로 작동합니다",
                 "improvements": "더 효율적인 알고리즘을 고려해보세요",
                 "time_complexity": "O(n)",
-                "algorithm_type": "구현"
+                "algorithm_type": "구현",
+                "core_concept": "문제의 핵심 개념을 파악하여 체계적으로 접근해보세요"
             }
 
     async def generate_optimized_code(self, problem_description: str, language: str) -> Dict[str, str]:
         messages = [
             {
                 "role": "system",
-                "content": """You are a competitive programming expert.
-                Generate the most optimal solution for the given problem and provide explanation in Korean.
-                Return a JSON response with:
+                "content": """You are a competitive programming expert specializing in algorithm optimization.
+                Generate the MOST TIME-EFFICIENT solution for the given problem.
+                Focus on optimal time complexity, efficient algorithms, and clean implementation.
+
+                IMPORTANT: Return ONLY a valid JSON response with this exact format:
                 {
-                    "code": "optimized code string",
-                    "explanation": "explanation in Korean including time complexity"
-                }"""
+                    "code": "최적화된 완전한 코드 (주석 포함)",
+                    "explanation": "시간복잡도와 핵심 알고리즘을 포함한 한국어 설명"
+                }
+
+                Do NOT include any text before or after the JSON. The response must be parseable JSON."""
             },
             {
                 "role": "user",
@@ -83,12 +114,27 @@ class OpenAIClient:
             }
         ]
 
-        response = await self._chat_completion(messages, temperature=0.1)
+        response = await self._chat_completion(messages, temperature=0.1, max_tokens=2000)
 
         try:
             import json
-            return json.loads(response)
-        except json.JSONDecodeError:
+            # OpenAI 응답 로깅 추가
+            print(f"OpenAI Raw Response: {response}")
+
+            # JSON 응답 정리 (markdown 코드 블록 제거 등)
+            response_clean = response.strip()
+            if response_clean.startswith('```json'):
+                response_clean = response_clean[7:]
+            if response_clean.startswith('```'):
+                response_clean = response_clean[3:]
+            if response_clean.endswith('```'):
+                response_clean = response_clean[:-3]
+
+            return json.loads(response_clean.strip())
+        except json.JSONDecodeError as e:
+            # JSON 파싱 오류 상세 로깅
+            print(f"JSON 파싱 오류: {e}")
+            print(f"파싱 실패한 응답: {response}")
             return {
                 "code": f"// {language} 최적화된 코드\n// 구현 중...",
                 "explanation": "최적화된 솔루션을 생성하는 중 오류가 발생했습니다."

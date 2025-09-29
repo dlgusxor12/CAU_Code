@@ -17,6 +17,7 @@ class CodeAnalysisResponse(BaseModel):
     core_concept: str = Field(..., description="핵심 설명")
     time_complexity: str = Field(..., description="시간 복잡도")
     algorithm_type: str = Field(..., description="알고리즘 유형")
+    language: str = Field(..., description="사용된 프로그래밍 언어")
     analysis_timestamp: datetime = Field(..., description="분석 시간")
 
 
