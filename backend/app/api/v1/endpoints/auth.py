@@ -391,3 +391,71 @@ async def verify_status_by_code(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="인증 상태 확인 중 오류가 발생했습니다."
         )
+
+
+@router.post("/guest-login", response_model=GoogleTokenResponse)
+@auth_rate_limit
+async def guest_login(
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    게스트 로그인 (dlgusxor12 계정으로 자동 로그인)
+    """
+    try:
+        # 게스트 계정 조회 (solved.ac username으로 찾기)
+        guest_username = "dlgusxor12"
+
+        # solvedac_username으로 사용자 찾기
+        from sqlalchemy import select
+        from app.models.auth import User
+
+        result = await db.execute(
+            select(User).where(User.solvedac_username == guest_username)
+        )
+        guest_user = result.scalar_one_or_none()
+
+        if not guest_user:
+            logger.error(f"게스트 계정을 찾을 수 없습니다: {guest_username}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="게스트 계정을 찾을 수 없습니다."
+            )
+
+        # JWT 토큰 생성
+        access_token, refresh_token = await auth_service.generate_tokens_for_user(guest_user)
+
+        # 세션 생성
+        client_ip = get_client_ip(request)
+        user_agent = get_user_agent(request)
+
+        await auth_service.create_user_session(
+            db=db,
+            user_id=guest_user.user_id,
+            access_token=access_token,
+            refresh_token=refresh_token,
+            user_agent=user_agent,
+            ip_address=client_ip
+        )
+
+        # 응답 생성
+        user_profile = UserProfile.model_validate(guest_user)
+
+        logger.info(f"게스트 로그인: {guest_user.email}")
+
+        return GoogleTokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            expires_in=auth_service.access_token_expire_minutes * 60,
+            user=user_profile
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"게스트 로그인 중 오류: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="게스트 로그인 처리 중 오류가 발생했습니다."
+        )

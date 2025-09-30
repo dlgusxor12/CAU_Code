@@ -187,6 +187,36 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // 게스트 로그인
+  const handleGuestLogin = async () => {
+    dispatch({ type: AUTH_ACTIONS.LOADING, payload: true });
+
+    try {
+      const result = await authService.guestLogin();
+
+      if (result.success) {
+        dispatch({
+          type: AUTH_ACTIONS.LOGIN_SUCCESS,
+          payload: { user: result.user }
+        });
+        return { success: true, user: result.user };
+      } else {
+        dispatch({
+          type: AUTH_ACTIONS.LOGIN_FAILURE,
+          payload: { error: result.error }
+        });
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      const errorMessage = '게스트 로그인 중 오류가 발생했습니다.';
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_FAILURE,
+        payload: { error: errorMessage }
+      });
+      return { success: false, error: errorMessage };
+    }
+  };
+
   // solved.ac 프로필 인증 요청
   const requestSolvedacVerification = async (solvedacUsername) => {
     try {
@@ -266,6 +296,7 @@ export const AuthProvider = ({ children }) => {
 
     // 액션들
     login: handleGoogleLogin,
+    guestLogin: handleGuestLogin,
     logout: handleLogout,
     requestSolvedacVerification,
     checkVerificationStatus,
