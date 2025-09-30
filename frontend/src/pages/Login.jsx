@@ -10,9 +10,10 @@ import { useAuth } from '../contexts/AuthContext';
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, error, isLoading, clearError } = useAuth();
+  const { login, guestLogin, error, isLoading, clearError } = useAuth();
 
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGuestLoading, setIsGuestLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
 
   // 리다이렉트할 경로 (로그인 전에 접근하려던 페이지)
@@ -94,6 +95,28 @@ const Login = () => {
     }
   };
 
+  // 게스트 로그인 처리
+  const handleGuestLogin = async () => {
+    setIsGuestLoading(true);
+    setLoginError('');
+
+    try {
+      const result = await guestLogin();
+
+      if (result.success) {
+        // 게스트 계정은 이미 프로필 인증이 완료되어 있으므로 바로 대시보드로
+        navigate(from, { replace: true });
+      } else {
+        setLoginError(result.error || '게스트 로그인에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('게스트 로그인 처리 중 오류:', error);
+      setLoginError('게스트 로그인 처리 중 오류가 발생했습니다.');
+    } finally {
+      setIsGuestLoading(false);
+    }
+  };
+
   // 표시할 에러 메시지 결정
   const displayError = loginError || error;
 
@@ -153,10 +176,54 @@ const Login = () => {
               )}
             </div>
 
+            {/* 구분선 */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">또는</span>
+              </div>
+            </div>
+
+            {/* 게스트 로그인 버튼 */}
+            <div className="flex justify-center">
+              <button
+                onClick={handleGuestLogin}
+                disabled={isLoading || isGuestLoading || isGoogleLoading}
+                className={`
+                  w-full max-w-[300px] py-3 px-6 rounded-lg font-medium
+                  transition-all duration-200
+                  flex items-center justify-center space-x-2
+                  ${isGuestLoading
+                    ? 'bg-gray-100 cursor-not-allowed'
+                    : 'bg-[#143365] hover:bg-[#1a4080] text-white shadow-md hover:shadow-lg'
+                  }
+                `}
+              >
+                {isGuestLoading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-[#2B95C3] border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-gray-600">로그인 중...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                    </svg>
+                    <span>게스트로 체험하기</span>
+                  </>
+                )}
+              </button>
+            </div>
+
             {/* 추가 정보 */}
             <div className="text-center text-sm text-gray-500 space-y-2">
               <p>
                 로그인 후 solved.ac 프로필 연동이 필요합니다
+              </p>
+              <p className="text-xs">
+                게스트 모드는 dlgusxor12 계정으로 플랫폼을 체험합니다
               </p>
               <p className="text-xs">
                 Google 계정 정보는 안전하게 보호됩니다

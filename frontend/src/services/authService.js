@@ -63,6 +63,29 @@ class AuthService {
     }
   }
 
+  // 게스트 로그인
+  async guestLogin() {
+    try {
+      const response = await apiClient.post('/auth/guest-login');
+
+      const { access_token, refresh_token, user } = response.data;
+
+      // 토큰과 사용자 정보 저장
+      this.setTokens(access_token, refresh_token, user);
+
+      // axios 인터셉터에 토큰 설정
+      this.setupAxiosInterceptors();
+
+      return { success: true, user, message: '게스트 로그인 성공' };
+    } catch (error) {
+      console.error('게스트 로그인 실패:', error);
+      return {
+        success: false,
+        error: error.response?.data?.detail || '게스트 로그인에 실패했습니다.'
+      };
+    }
+  }
+
   // 로그아웃
   async logout() {
     try {
