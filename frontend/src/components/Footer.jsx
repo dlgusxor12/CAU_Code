@@ -32,11 +32,11 @@ const Footer = () => {
           <div>
             <h4 className="text-lg font-semibold mb-4">지원</h4>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">도움말</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">FAQ</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">문의하기</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">버그 신고</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">기능 제안</a></li>
+              <li><a href="/help" className="text-gray-300 hover:text-white transition-colors">도움말</a></li>
+              <li><a href="/faq" className="text-gray-300 hover:text-white transition-colors">FAQ</a></li>
+              <li><a href="/contact" className="text-gray-300 hover:text-white transition-colors">문의하기</a></li>
+              <li><a href="/contact" className="text-gray-300 hover:text-white transition-colors">버그 신고</a></li>
+              <li><a href="/feature-request" className="text-gray-300 hover:text-white transition-colors">기능 제안</a></li>
             </ul>
           </div>
         </div>
@@ -45,9 +45,9 @@ const Footer = () => {
         <div className="border-t border-gray-700 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex flex-wrap justify-center md:justify-start space-x-6 mb-4 md:mb-0">
-              <a href="#" className="text-gray-300 hover:text-white text-sm transition-colors">개인정보처리방침</a>
-              <a href="#" className="text-gray-300 hover:text-white text-sm transition-colors">이용약관</a>
-              <a href="#" className="text-gray-300 hover:text-white text-sm transition-colors">사이트 소개</a>
+              <a href="/privacy" className="text-gray-300 hover:text-white text-sm transition-colors">개인정보처리방침</a>
+              <a href="/terms" className="text-gray-300 hover:text-white text-sm transition-colors">이용약관</a>
+              <a href="/about" className="text-gray-300 hover:text-white text-sm transition-colors">사이트 소개</a>
             </div>
             <div className="text-gray-400 text-sm text-center md:text-right">
               <p>&copy; 2025 CAU Code. All rights reserved.</p>
