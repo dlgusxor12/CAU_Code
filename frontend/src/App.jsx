@@ -19,6 +19,15 @@ import VerifyAuth from './pages/VerifyAuth';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 
+// Footer Pages
+import Help from './pages/Help';
+import FAQ from './pages/FAQ';
+import Contact from './pages/Contact';
+import FeatureRequest from './pages/FeatureRequest';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
+import About from './pages/About';
+
 function App() {
   return (
     <AuthProvider>
@@ -150,6 +159,92 @@ function App() {
                     <Footer />
                   </div>
                 </ProtectedRoute>
+              }
+            />
+
+            {/* Footer Pages (Public Routes) */}
+            <Route
+              path="/help"
+              element={
+                <div className="flex flex-col min-h-screen">
+                  <Navigation />
+                  <main className="flex-grow">
+                    <Help />
+                  </main>
+                  <Footer />
+                </div>
+              }
+            />
+            <Route
+              path="/faq"
+              element={
+                <div className="flex flex-col min-h-screen">
+                  <Navigation />
+                  <main className="flex-grow">
+                    <FAQ />
+                  </main>
+                  <Footer />
+                </div>
+              }
+            />
+            <Route
+              path="/contact"
+              element={
+                <div className="flex flex-col min-h-screen">
+                  <Navigation />
+                  <main className="flex-grow">
+                    <Contact />
+                  </main>
+                  <Footer />
+                </div>
+              }
+            />
+            <Route
+              path="/feature-request"
+              element={
+                <div className="flex flex-col min-h-screen">
+                  <Navigation />
+                  <main className="flex-grow">
+                    <FeatureRequest />
+                  </main>
+                  <Footer />
+                </div>
+              }
+            />
+            <Route
+              path="/privacy"
+              element={
+                <div className="flex flex-col min-h-screen">
+                  <Navigation />
+                  <main className="flex-grow">
+                    <Privacy />
+                  </main>
+                  <Footer />
+                </div>
+              }
+            />
+            <Route
+              path="/terms"
+              element={
+                <div className="flex flex-col min-h-screen">
+                  <Navigation />
+                  <main className="flex-grow">
+                    <Terms />
+                  </main>
+                  <Footer />
+                </div>
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                <div className="flex flex-col min-h-screen">
+                  <Navigation />
+                  <main className="flex-grow">
+                    <About />
+                  </main>
+                  <Footer />
+                </div>
               }
             />
 

@@ -160,10 +160,21 @@ const Ranking = () => {
 
       {/* 랭킹 테이블 */}
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900">
             {activeTab === 'overall' ? '전체 랭킹' : `소속 랭킹 (${userOrganization})`}
           </h3>
+          <a
+            href="https://solved.ac/ko/ranking/tier"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#2B95C3] hover:text-[#143365] hover:bg-blue-50 rounded-lg transition-colors"
+          >
+            <span>solved.ac 랭킹 보러가기</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
         </div>
 
         <div className="overflow-x-auto">
