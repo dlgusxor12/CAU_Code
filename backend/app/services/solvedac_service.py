@@ -104,12 +104,18 @@ class SolvedACService(LoggerMixin):
 
             available_problems = raw_problems.get("items", [])
             if len(available_problems) >= count:
-                # 해시 기반으로 결정론적 선택
+                # 날짜별로 시작 오프셋을 크게 변경하여 다양성 확보
+                day_of_year = datetime.now().timetuple().tm_yday  # 1-366
+                base_offset = (seed_hash + day_of_year * 137) % len(available_problems)  # 137은 큰 소수
+
                 selected_indices = []
                 for i in range(count):
-                    index = (seed_hash + i * 7) % len(available_problems)  # 7로 곱해서 분산
-                    while index in selected_indices:  # 중복 방지
-                        index = (index + 1) % len(available_problems)
+                    # 피보나치 해싱으로 더 균등한 분산
+                    index = (base_offset + i * 89) % len(available_problems)  # 89는 소수
+                    attempts = 0
+                    while index in selected_indices and attempts < len(available_problems):
+                        index = (index + 13) % len(available_problems)  # 13은 작은 소수
+                        attempts += 1
                     selected_indices.append(index)
 
                 selected_problems = [available_problems[i] for i in selected_indices]

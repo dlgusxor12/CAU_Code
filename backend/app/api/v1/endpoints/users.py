@@ -187,11 +187,18 @@ async def get_todays_problems(username: str, count: int = 2):
         # DB에서 오늘 날짜 고정 문제 조회
         db_problems = await user_endpoints.db_service.get_daily_problems_from_db(username, "today", count)
 
-        # DB에 없으면 solved.ac에서 조회하고 저장 (TODO: 나중에 구현)
+        # DB에 없으면 solved.ac에서 조회하고 저장
         if not db_problems:
+            user_endpoints.logger.info(f"No daily problems found for {username}, fetching from solved.ac API")
             problems = await user_endpoints.solvedac_service.get_todays_problems(username, count)
+
+            # solved.ac에서 조회한 문제를 DB에 저장
+            if problems:
+                await user_endpoints.db_service.save_daily_problems_to_db(username, "today", problems)
+                user_endpoints.logger.info(f"Saved {len(problems)} daily problems for {username}")
         else:
             problems = db_problems
+            user_endpoints.logger.info(f"Found {len(problems)} daily problems in DB for {username}")
 
         # 난이도 분포 계산
         difficulty_distribution = {}
