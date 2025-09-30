@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(100) NOT NULL,
     profile_image_url VARCHAR(500),
     solvedac_username VARCHAR(50) UNIQUE,
+    organization VARCHAR(100), -- 사용자 소속 (학교, 회사 등) - 랭킹 기능용
     profile_verified BOOLEAN DEFAULT FALSE,
     verification_attempts INTEGER DEFAULT 0,
     last_verification_attempt TIMESTAMP WITH TIME ZONE,
@@ -33,11 +34,19 @@ CREATE INDEX IF NOT EXISTS idx_users_google_id ON users (google_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
 CREATE INDEX IF NOT EXISTS idx_users_solvedac_username ON users (solvedac_username);
 CREATE INDEX IF NOT EXISTS idx_users_verified ON users (profile_verified);
+CREATE INDEX IF NOT EXISTS idx_users_organization ON users (organization);
 
 -- solved.ac 프로필 데이터 인덱스 (Phase 2.2)
 CREATE INDEX IF NOT EXISTS idx_users_solvedac_tier ON users (solvedac_tier);
 CREATE INDEX IF NOT EXISTS idx_users_solvedac_last_synced ON users (solvedac_last_synced);
 CREATE INDEX IF NOT EXISTS idx_users_profile_data ON users USING GIN (solvedac_profile_data);
+
+-- 랭킹 조회 최적화를 위한 복합 인덱스
+CREATE INDEX IF NOT EXISTS idx_users_verified_rating ON users (profile_verified, solvedac_rating DESC)
+WHERE profile_verified = true AND solvedac_rating IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_users_org_verified_rating ON users (organization, profile_verified, solvedac_rating DESC)
+WHERE profile_verified = true AND solvedac_rating IS NOT NULL;
 
 -- 2. 사용자 세션 관리 테이블 (JWT)
 CREATE TABLE IF NOT EXISTS user_sessions (

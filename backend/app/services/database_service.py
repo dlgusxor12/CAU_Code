@@ -215,3 +215,253 @@ class DatabaseService(LoggerMixin):
         except Exception as e:
             self.log_error(f"Add user activity error for {username}", e)
             return False
+
+    async def save_daily_problems_to_db(self, username: str, problem_type: str,
+                                       problems: List[Dict[str, Any]]) -> bool:
+        """오늘의 문제를 DB에 저장 (중복 방지)"""
+        try:
+            async with await self.get_session() as session:
+                for problem in problems:
+                    query = text("""
+                        INSERT INTO daily_problems
+                        (date, username, problem_type, problem_id, problem_title, problem_tags, tier)
+                        VALUES (CURRENT_DATE, :username, :problem_type, :problem_id, :problem_title, :problem_tags, :tier)
+                        ON CONFLICT (date, username, problem_type, problem_id) DO NOTHING
+                    """)
+
+                    await session.execute(query, {
+                        "username": username,
+                        "problem_type": problem_type,
+                        "problem_id": problem.get("problem_id"),
+                        "problem_title": problem.get("title"),
+                        "problem_tags": problem.get("tags", []),
+                        "tier": problem.get("tier_name")
+                    })
+
+                await session.commit()
+                return True
+
+        except Exception as e:
+            self.log_error(f"Save daily problems error for {username}", e)
+            return False
+
+    async def get_global_ranking(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """전체 랭킹 조회 (solved.ac 레이팅 기준)"""
+        try:
+            async with await self.get_session() as session:
+                query = text("""
+                    SELECT
+                        u.solvedac_username,
+                        u.organization,
+                        u.solvedac_tier,
+                        u.solvedac_rating,
+                        u.solvedac_solved_count,
+                        COALESCE(cau_solved.solved_count, 0) as cau_solved_count,
+                        ROW_NUMBER() OVER (ORDER BY u.solvedac_rating DESC NULLS LAST) as rank
+                    FROM users u
+                    LEFT JOIN (
+                        SELECT username, COUNT(*) as solved_count
+                        FROM user_activities
+                        WHERE activity_type = 'problem_solved'
+                        GROUP BY username
+                    ) cau_solved ON u.solvedac_username = cau_solved.username
+                    WHERE u.profile_verified = true
+                    AND u.solvedac_rating IS NOT NULL
+                    ORDER BY u.solvedac_rating DESC
+                    LIMIT :limit
+                """)
+
+                result = await session.execute(query, {"limit": limit})
+
+                rankings = []
+                for row in result:
+                    rankings.append({
+                        "rank": row.rank,
+                        "username": row.solvedac_username,
+                        "organization": row.organization or "미분류",
+                        "tier": row.solvedac_tier or "Unrated",
+                        "rating": row.solvedac_rating or 0,
+                        "total_solved": row.solvedac_solved_count or 0,
+                        "cau_solved": row.cau_solved_count
+                    })
+
+                return rankings
+
+        except Exception as e:
+            self.log_error("Get global ranking error", e)
+            return []
+
+    async def get_organization_ranking(self, organization: str, limit: int = 100) -> List[Dict[str, Any]]:
+        """소속별 랭킹 조회"""
+        try:
+            async with await self.get_session() as session:
+                query = text("""
+                    SELECT
+                        u.solvedac_username,
+                        u.organization,
+                        u.solvedac_tier,
+                        u.solvedac_rating,
+                        u.solvedac_solved_count,
+                        COALESCE(cau_solved.solved_count, 0) as cau_solved_count,
+                        ROW_NUMBER() OVER (ORDER BY u.solvedac_rating DESC NULLS LAST) as rank
+                    FROM users u
+                    LEFT JOIN (
+                        SELECT username, COUNT(*) as solved_count
+                        FROM user_activities
+                        WHERE activity_type = 'problem_solved'
+                        GROUP BY username
+                    ) cau_solved ON u.solvedac_username = cau_solved.username
+                    WHERE u.profile_verified = true
+                    AND u.organization = :organization
+                    AND u.solvedac_rating IS NOT NULL
+                    ORDER BY u.solvedac_rating DESC
+                    LIMIT :limit
+                """)
+
+                result = await session.execute(query, {"organization": organization, "limit": limit})
+
+                rankings = []
+                for row in result:
+                    rankings.append({
+                        "rank": row.rank,
+                        "username": row.solvedac_username,
+                        "organization": row.organization or "미분류",
+                        "tier": row.solvedac_tier or "Unrated",
+                        "rating": row.solvedac_rating or 0,
+                        "total_solved": row.solvedac_solved_count or 0,
+                        "cau_solved": row.cau_solved_count
+                    })
+
+                return rankings
+
+        except Exception as e:
+            self.log_error(f"Get organization ranking error for {organization}", e)
+            return []
+
+    async def get_my_rank_info(self, username: str) -> Dict[str, Any]:
+        """내 랭킹 정보 조회"""
+        try:
+            async with await self.get_session() as session:
+                query = text("""
+                    WITH ranked_users AS (
+                        SELECT
+                            u.solvedac_username,
+                            u.organization,
+                            u.solvedac_tier,
+                            u.solvedac_rating,
+                            u.solvedac_solved_count,
+                            ROW_NUMBER() OVER (ORDER BY u.solvedac_rating DESC NULLS LAST) as global_rank
+                        FROM users u
+                        WHERE u.profile_verified = true
+                        AND u.solvedac_rating IS NOT NULL
+                    )
+                    SELECT * FROM ranked_users WHERE solvedac_username = :username
+                """)
+
+                result = await session.execute(query, {"username": username})
+                row = result.first()
+
+                if not row:
+                    return {}
+
+                return {
+                    "username": row.solvedac_username,
+                    "organization": row.organization or "미분류",
+                    "tier": row.solvedac_tier or "Unrated",
+                    "rating": row.solvedac_rating or 0,
+                    "total_solved": row.solvedac_solved_count or 0,
+                    "global_rank": row.global_rank
+                }
+
+        except Exception as e:
+            self.log_error(f"Get my rank info error for {username}", e)
+            return {}
+
+    async def get_ranking_stats(self) -> Dict[str, Any]:
+        """랭킹 통계 조회 (총 사용자 수, 평균 해결 문제 수 등)"""
+        try:
+            async with await self.get_session() as session:
+                # 총 사용자 수
+                total_users_query = text("""
+                    SELECT COUNT(*) as count
+                    FROM users
+                    WHERE profile_verified = true
+                """)
+
+                # 평균 해결 문제 수
+                avg_solved_query = text("""
+                    SELECT AVG(solvedac_solved_count)::INTEGER as avg_solved
+                    FROM users
+                    WHERE profile_verified = true
+                    AND solvedac_solved_count IS NOT NULL
+                """)
+
+                total_result = await session.execute(total_users_query)
+                avg_result = await session.execute(avg_solved_query)
+
+                total_users = total_result.scalar() or 0
+                avg_solved = avg_result.scalar() or 0
+
+                return {
+                    "total_users": total_users,
+                    "avg_solved_count": avg_solved
+                }
+
+        except Exception as e:
+            self.log_error("Get ranking stats error", e)
+            return {
+                "total_users": 0,
+                "avg_solved_count": 0
+            }
+
+    async def get_organization_user_count(self, organization: str) -> int:
+        """특정 소속의 사용자 수 조회"""
+        try:
+            async with await self.get_session() as session:
+                query = text("""
+                    SELECT COUNT(*) as count
+                    FROM users
+                    WHERE profile_verified = true
+                    AND organization = :organization
+                """)
+
+                result = await session.execute(query, {"organization": organization})
+                return result.scalar() or 0
+
+        except Exception as e:
+            self.log_error(f"Get organization user count error for {organization}", e)
+            return 0
+
+    async def update_user_solvedac_profile(self, username: str, tier: str, rating: int, solved_count: int) -> bool:
+        """사용자의 solved.ac 프로필 정보 업데이트 (실시간 동기화)"""
+        try:
+            async with await self.get_session() as session:
+                query = text("""
+                    UPDATE users
+                    SET solvedac_tier = :tier,
+                        solvedac_rating = :rating,
+                        solvedac_solved_count = :solved_count,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE solvedac_username = :username
+                    AND profile_verified = true
+                """)
+
+                result = await session.execute(query, {
+                    "username": username,
+                    "tier": tier,
+                    "rating": rating,
+                    "solved_count": solved_count
+                })
+
+                await session.commit()
+
+                if result.rowcount > 0:
+                    self.logger.info(f"Updated solvedac profile for {username}: tier={tier}, rating={rating}, solved={solved_count}")
+                    return True
+                else:
+                    self.logger.warning(f"No user found to update: {username}")
+                    return False
+
+        except Exception as e:
+            self.log_error(f"Update user solvedac profile error for {username}", e)
+            return False
