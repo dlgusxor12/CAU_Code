@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import AsyncSessionLocal
 from app.utils.logging import LoggerMixin
+from app.utils.helpers import tier_name_to_id
 
 
 class DatabaseService(LoggerMixin):
@@ -102,11 +103,13 @@ class DatabaseService(LoggerMixin):
 
                 problems = []
                 for row in result:
+                    tier_name = row.tier
                     problems.append({
                         "problem_id": row.problem_id,
                         "title": row.problem_title,
                         "tags": row.problem_tags,  # 전체 태그 배열
-                        "tier_name": row.tier
+                        "tier_name": tier_name,
+                        "tier": tier_name_to_id(tier_name)  # 숫자 tier 값 추가
                     })
 
                 return problems

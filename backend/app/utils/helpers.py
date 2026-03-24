@@ -17,6 +17,21 @@ def tier_id_to_name(tier_id: int) -> str:
     return tier_names.get(tier_id, "Unknown")
 
 
+def tier_name_to_id(tier_name: str) -> int:
+    """티어 이름을 티어 ID로 변환"""
+    tier_map = {
+        "Unrated": 0,
+        "Bronze V": 1, "Bronze IV": 2, "Bronze III": 3, "Bronze II": 4, "Bronze I": 5,
+        "Silver V": 6, "Silver IV": 7, "Silver III": 8, "Silver II": 9, "Silver I": 10,
+        "Gold V": 11, "Gold IV": 12, "Gold III": 13, "Gold II": 14, "Gold I": 15,
+        "Platinum V": 16, "Platinum IV": 17, "Platinum III": 18, "Platinum II": 19, "Platinum I": 20,
+        "Diamond V": 21, "Diamond IV": 22, "Diamond III": 23, "Diamond II": 24, "Diamond I": 25,
+        "Ruby V": 26, "Ruby IV": 27, "Ruby III": 28, "Ruby II": 29, "Ruby I": 30,
+        "Master": 31
+    }
+    return tier_map.get(tier_name, 0)
+
+
 def tier_id_to_color(tier_id: int) -> str:
     """티어 ID를 색상으로 변환"""
     if tier_id == 0:
