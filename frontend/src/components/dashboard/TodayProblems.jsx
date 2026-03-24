@@ -22,8 +22,9 @@ const TodayProblems = () => {
           title: problem.title,
           description: problem.description || `${problem.tier_name} 난이도의 문제입니다`,
           tier: problem.tier_name,
+          tierNum: problem.tier, // 숫자 티어 값 저장
           tags: problem.tags || ['미등록'], // 전체 태그 배열 저장
-          tierColor: getTierColor(problem.tier),
+          tierColor: getTierColor(problem.tier), // 숫자 티어로 색상 결정
           algorithmColor: 'bg-blue-100 text-blue-800'
         }));
         setProblems(formattedProblems);
